@@ -1,3 +1,4 @@
+
 import { API_ENDPOINTS } from '../constants';
 import { 
   Candidate, Voter, AdCampaignReport, CampaignTeamMember, CampaignStructureNode, GeneralReport, PollingPlace, Message, AppSettings, AuthenticatedUser, UserRole 
@@ -56,8 +57,10 @@ let mockGeneralReports: GeneralReport[] = [
 ];
 
 let mockPollingPlaces: PollingPlace[] = [
-    {id: 'poll001', name: 'Escuela Central', address: 'Calle Principal 123', city: 'Ciudad Capital', openingHours: '8 AM - 6 PM'},
-    {id: 'poll002', name: 'Gimnasio Municipal', address: 'Avenida Libertad 456', city: 'Distrito Central', openingHours: '8 AM - 6 PM'},
+    {id: 'poll001', name: 'Escuela Central Principal', address: 'Calle Principal 123', city: 'Ciudad Capital', openingHours: '8 AM - 6 PM', latitude: 4.60971, longitude: -74.08175 }, // Bogotá
+    {id: 'poll002', name: 'Gimnasio Municipal del Norte', address: 'Avenida Libertad 456', city: 'Distrito Central', openingHours: '8 AM - 6 PM', latitude: 3.451647, longitude: -76.532050 }, // Cali
+    {id: 'poll003', name: 'Colegio San Juan Bosco', address: 'Carrera 43 #70-100', city: 'Medellín', openingHours: '7 AM - 5 PM', latitude: 6.25184, longitude: -75.56359 }, // Medellín
+    {id: 'poll004', name: 'Universidad del Atlántico - Sede Norte', address: 'Corredor Universitario', city: 'Barranquilla', openingHours: '8 AM - 4 PM', latitude: 10.963889, longitude: -74.796389 }, // Barranquilla
 ];
 
 let mockMessages: Message[] = [
@@ -130,7 +133,7 @@ export const getGeneralReports = async (): Promise<GeneralReport[]> => {
 
 export const getPollingPlaces = async (): Promise<PollingPlace[]> => {
     console.log(`Llamando mock ${API_ENDPOINTS.GET_POLLING_PLACES}`);
-    return simulateApiCall(mockPollingPlaces);
+    return simulateApiCall(mockPollingPlaces.filter(p => p.latitude && p.longitude)); // Ensure places have coordinates
 };
 
 export const getVoterLocationData = async (): Promise<any> => { // Debería retornar GeoJSON o similar

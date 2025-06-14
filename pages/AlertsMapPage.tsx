@@ -1,86 +1,90 @@
+
 import React, { useState, useEffect } from 'react';
-import { Alert, AlertType, AlertStatus } from '../types';
+import { Alert, AlertType, AlertStatus, PollingPlace } from '../types';
 import { getAlertsData } from '../services/campaignService';
+import { getPollingPlaces } from '../services/electoralPwaService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AlertMessage from '../components/AlertMessage';
 import { MAP_DEFAULT_CENTER, MAP_DEFAULT_ZOOM, ALERT_TYPE_OPTIONS } from '../constants';
-import { MapIcon, MapPinIcon as LocationMarkerIcon, FunnelIcon as FilterIcon, CalendarDaysIcon as CalendarIcon, UserIcon, InformationCircleIcon, PhotoIcon as PhotographIcon, ExclamationTriangleIcon, ShieldCheckIcon, QuestionMarkCircleIcon, ChatBubbleOvalLeftIcon } from '@heroicons/react/24/outline';
+import { MapIcon, MapPinIcon as LocationMarkerIcon, FunnelIcon as FilterIcon, CalendarDaysIcon as CalendarIcon, UserIcon, InformationCircleIcon, PhotoIcon as PhotographIcon, ExclamationTriangleIcon, ShieldCheckIcon, QuestionMarkCircleIcon, ChatBubbleOvalLeftIcon, BuildingLibraryIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
 
-// Mock Leaflet.js behavior for UI demonstration purposes
-const MockMap: React.FC<{ alerts: Alert[]; selectedAlert: Alert | null; onMarkerClick: (alert: Alert) => void; center: [number, number]; zoom: number }> = ({ alerts, selectedAlert, onMarkerClick, center, zoom }) => {
-  const getPinColor = (type: AlertType) => {
+type MapMode = 'alerts' | 'pollingPlaces';
+
+const getCustomMapIcon = (type: AlertType | 'pollingPlace') => {
+  let iconColorClass = 'text-gray-500';
+
+  if (type === 'pollingPlace') {
+    iconColorClass = 'text-purple-600'; // Color for polling places
+     return L.divIcon({
+      html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 ${iconColorClass} drop-shadow-lg"><path fill-rule="evenodd" d="M4.5 2.25a.75.75 0 000 1.5v16.5a.75.75 0 001.5 0v-1.5h10.5a.75.75 0 000-1.5H6v-1.5h10.5a.75.75 0 000-1.5H6V15h10.5a.75.75 0 000-1.5H6v-1.5h10.5a.75.75 0 000-1.5H6V9h10.5a.75.75 0 000-1.5H6V6h10.5a.75.75 0 000-1.5H6V3a.75.75 0 00-.75-.75H4.5z" clip-rule="evenodd" /></svg>`,
+      className: 'bg-transparent border-0',
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32]
+    });
+  } else {
     switch (type) {
-      case AlertType.FALLA_SERVICIO: return 'bg-blue-500';
-      case AlertType.PROBLEMA_SEGURIDAD: return 'bg-red-500';
-      case AlertType.NECESIDAD_COMUNITARIA: return 'bg-yellow-500';
-      default: return 'bg-gray-500';
+      case AlertType.FALLA_SERVICIO: iconColorClass = 'text-blue-500'; break;
+      case AlertType.PROBLEMA_SEGURIDAD: iconColorClass = 'text-red-500'; break;
+      case AlertType.NECESIDAD_COMUNITARIA: iconColorClass = 'text-yellow-500'; break;
+      default: iconColorClass = 'text-gray-600'; break;
     }
-  };
-
-  return (
-    <div className="w-full h-[500px] bg-gray-300 rounded-lg shadow-md relative overflow-hidden" title={`Mapa centrado en ${center} con zoom ${zoom}`}>
-      <p className="absolute top-2 left-2 bg-white bg-opacity-75 p-2 rounded text-xs text-gray-700">Mapa simulado (Leaflet.js iría aquí)</p>
-      {alerts.map((alert, index) => (
-        // Simple positioning simulation. Real map would use lat/lng.
-        <button
-          key={alert.alertaID}
-          onClick={() => onMarkerClick(alert)}
-          className={`absolute transform -translate-x-1/2 -translate-y-1/2 p-2 rounded-full shadow-lg hover:scale-110 transition-transform ${getPinColor(alert.tipoAlerta)} ${selectedAlert?.alertaID === alert.alertaID ? 'ring-4 ring-indigo-300' : ''}`}
-          style={{ 
-            left: `${20 + (index % 5) * 15 + Math.random()*5}%`, // Randomize a bit for visual spread
-            top: `${20 + Math.floor(index / 5) * 15 + Math.random()*5}%`,
-            zIndex: selectedAlert?.alertaID === alert.alertaID ? 10 : 1
-           }}
-          title={alert.descripcion}
-        >
-          <LocationMarkerIcon className="h-5 w-5 text-white" />
-        </button>
-      ))}
-    </div>
-  );
+    return L.divIcon({
+      html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 ${iconColorClass} drop-shadow-lg"><path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>`,
+      className: 'bg-transparent border-0',
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32]
+    });
+  }
 };
 
+const ChangeView: React.FC<{ center: L.LatLngExpression; zoom: number }> = ({ center, zoom }) => {
+  const map = useMap();
+  map.setView(center, zoom);
+  return null;
+};
 
 const AlertsMapPage: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [pollingPlaces, setPollingPlaces] = useState<PollingPlace[]>([]);
   const [filteredAlerts, setFilteredAlerts] = useState<Alert[]>([]);
-  const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<AlertType | ''>('');
-  const [filterMunicipio, setFilterMunicipio] = useState<string>(''); // Placeholder, needs user data or predefined list
+  const [mapMode, setMapMode] = useState<MapMode>('alerts');
+  
+  const [mapCenter, setMapCenter] = useState<L.LatLngExpression>(MAP_DEFAULT_CENTER);
+  const [mapZoom, setMapZoom] = useState<number>(MAP_DEFAULT_ZOOM);
 
   useEffect(() => {
-    const loadAlerts = async () => {
+    const loadData = async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await getAlertsData();
-        setAlerts(data);
-        setFilteredAlerts(data); // Initially show all
+        if (mapMode === 'alerts') {
+          const data = await getAlertsData();
+          setAlerts(data);
+          setFilteredAlerts(data.filter(alert => filterType ? alert.tipoAlerta === filterType : true));
+        } else if (mapMode === 'pollingPlaces') {
+          const data = await getPollingPlaces();
+          setPollingPlaces(data);
+        }
       } catch (err) {
-        console.error("Error al cargar alertas:", err);
-        setError("No se pudieron cargar las alertas. Inténtalo de nuevo más tarde.");
+        console.error(`Error al cargar datos para modo ${mapMode}:`, err);
+        setError(`No se pudieron cargar los datos para ${mapMode === 'alerts' ? 'alertas' : 'puestos de votación'}. Inténtalo de nuevo.`);
       } finally {
         setLoading(false);
       }
     };
-    loadAlerts();
-  }, []);
+    loadData();
+  }, [mapMode, filterType]); // Recargar datos si cambia el modo o el filtro de tipo de alerta
 
-  useEffect(() => {
-    let currentAlerts = [...alerts];
-    if (filterType) {
-      currentAlerts = currentAlerts.filter(alert => alert.tipoAlerta === filterType);
-    }
-    // if (filterMunicipio) { // Add municipio to Alert type if needed for filtering
-    //   currentAlerts = currentAlerts.filter(alert => alert.municipio === filterMunicipio);
-    // }
-    setFilteredAlerts(currentAlerts);
-    setSelectedAlert(null); // Deselect alert when filters change
-  }, [filterType, filterMunicipio, alerts]);
-  
-  const getAlertIcon = (type: AlertType) => {
+  const getDetailIcon = (type: AlertType | 'pollingPlace') => {
+    if (type === 'pollingPlace') return <BuildingLibraryIcon className="h-5 w-5 text-purple-600 mr-2"/>;
     switch(type) {
         case AlertType.FALLA_SERVICIO: return <ExclamationTriangleIcon className="h-5 w-5 text-blue-500 mr-2"/>;
         case AlertType.PROBLEMA_SEGURIDAD: return <ShieldCheckIcon className="h-5 w-5 text-red-500 mr-2"/>;
@@ -89,79 +93,115 @@ const AlertsMapPage: React.FC = () => {
     }
   }
 
+  const commonInputClasses = "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md";
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800 flex items-center">
           <MapIcon className="h-8 w-8 mr-3 text-indigo-600" />
-          Mapa de Alertas en Tiempo Real
+          Mapa Interactivo
         </h1>
       </div>
 
       {error && <AlertMessage type="error" message={error} onClose={() => setError(null)} />}
 
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-col sm:flex-row gap-4 items-center">
-        <FilterIcon className="h-6 w-6 text-gray-500 hidden sm:block" />
-        <div className="w-full sm:w-auto">
-          <label htmlFor="filterType" className="block text-sm font-medium text-gray-700">Tipo de Alerta</label>
+      <div className="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div>
+          <label htmlFor="mapMode" className="block text-sm font-medium text-gray-700">Modo del Mapa</label>
           <select
-            id="filterType"
-            name="filterType"
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value as AlertType | '')}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            id="mapMode"
+            name="mapMode"
+            value={mapMode}
+            onChange={(e) => {
+              setMapMode(e.target.value as MapMode);
+              setFilterType(''); // Reset filter type when mode changes
+            }}
+            className={commonInputClasses}
           >
-            <option value="">Todos los tipos</option>
-            {ALERT_TYPE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            <option value="alerts">Alertas Ciudadanas</option>
+            <option value="pollingPlaces">Puestos de Votación</option>
           </select>
         </div>
-        {/* Placeholder for Municipio Filter - would require User data or predefined list */}
-        {/* <div className="w-full sm:w-auto">
-          <label htmlFor="filterMunicipio" className="block text-sm font-medium text-gray-700">Municipio</label>
-          <input type="text" id="filterMunicipio" name="filterMunicipio" value={filterMunicipio} onChange={(e) => setFilterMunicipio(e.target.value)} placeholder="Ej: Cali" className="mt-1 block w-full sm:text-sm border-gray-300 rounded-md" />
-        </div> */}
+        {mapMode === 'alerts' && (
+          <div>
+            <label htmlFor="filterType" className="block text-sm font-medium text-gray-700">Filtrar Alertas por Tipo</label>
+            <select
+              id="filterType"
+              name="filterType"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value as AlertType | '')}
+              className={commonInputClasses}
+            >
+              <option value="">Todos los tipos</option>
+              {ALERT_TYPE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+          </div>
+        )}
       </div>
 
       {loading ? (
-        <LoadingSpinner message="Cargando mapa y alertas..." />
+        <LoadingSpinner message={`Cargando ${mapMode === 'alerts' ? 'alertas' : 'puestos de votación'}...`} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2">
-             <MockMap alerts={filteredAlerts} selectedAlert={selectedAlert} onMarkerClick={setSelectedAlert} center={MAP_DEFAULT_CENTER} zoom={MAP_DEFAULT_ZOOM} />
-          </div>
-          <div className="md:col-span-1 bg-white p-4 rounded-lg shadow-md max-h-[500px] overflow-y-auto">
-            {selectedAlert ? (
-              <div className="space-y-3">
-                <h3 className="text-xl font-semibold text-indigo-700 flex items-center">
-                  {getAlertIcon(selectedAlert.tipoAlerta)}
-                  {selectedAlert.tipoAlerta}
-                </h3>
-                <p className="text-gray-700"><strong className="font-medium text-gray-600">Descripción:</strong> {selectedAlert.descripcion}</p>
-                <p className="text-sm text-gray-500 flex items-center"><CalendarIcon className="h-4 w-4 mr-2"/> {new Date(selectedAlert.fechaReporte).toLocaleString('es-CO')}</p>
-                <p className="text-sm text-gray-500 flex items-center"><UserIcon className="h-4 w-4 mr-2"/>Reportado por: {selectedAlert.nombreReportador || 'Desconocido'}</p>
-                <p className="text-sm text-gray-500 flex items-center"><InformationCircleIcon className="h-4 w-4 mr-2"/>Estado: <span className={`font-semibold px-2 py-0.5 rounded-full text-xs ${selectedAlert.estado === AlertStatus.ABIERTA ? 'bg-red-100 text-red-700' : selectedAlert.estado === AlertStatus.EN_PROCESO ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{selectedAlert.estado}</span></p>
-                {selectedAlert.urlMedia && (
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-500 mb-1 flex items-center"><PhotographIcon className="h-4 w-4 mr-2"/>Evidencia:</p>
-                    <img src={selectedAlert.urlMedia} alt="Evidencia de alerta" className="rounded-md max-w-full h-auto shadow"/>
+        <div className="h-[500px] w-full bg-gray-200 rounded-lg shadow-md">
+          <MapContainer center={mapCenter} zoom={mapZoom} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
+            <ChangeView center={mapCenter} zoom={mapZoom} />
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {mapMode === 'alerts' && filteredAlerts.map(alert => (
+              <Marker 
+                key={alert.alertaID} 
+                position={[alert.latitud, alert.longitud]}
+                icon={getCustomMapIcon(alert.tipoAlerta)}
+              >
+                <Popup minWidth={250}>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-indigo-700 flex items-center">
+                      {getDetailIcon(alert.tipoAlerta)}
+                      {alert.tipoAlerta}
+                    </h3>
+                    <p className="text-sm text-gray-700"><strong className="font-medium">Desc:</strong> {alert.descripcion}</p>
+                    <p className="text-xs text-gray-500 flex items-center"><CalendarIcon className="h-3 w-3 mr-1.5"/> {new Date(alert.fechaReporte).toLocaleString('es-CO')}</p>
+                    <p className="text-xs text-gray-500 flex items-center"><UserIcon className="h-3 w-3 mr-1.5"/>Por: {alert.nombreReportador || 'Desconocido'}</p>
+                    <p className="text-xs text-gray-500 flex items-center"><InformationCircleIcon className="h-3 w-3 mr-1.5"/>Estado: <span className={`font-semibold px-1.5 py-0.5 rounded-full text-xs ${alert.estado === AlertStatus.ABIERTA ? 'bg-red-100 text-red-700' : alert.estado === AlertStatus.EN_PROCESO ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{alert.estado}</span></p>
+                    {alert.urlMedia && (
+                      <div className="mt-1">
+                        <p className="text-xs text-gray-500 mb-0.5 flex items-center"><PhotographIcon className="h-3 w-3 mr-1.5"/>Evidencia:</p>
+                        <a href={alert.urlMedia} target="_blank" rel="noopener noreferrer">
+                          <img src={alert.urlMedia} alt="Evidencia de alerta" className="rounded max-w-full h-auto max-h-28 shadow-sm hover:opacity-80"/>
+                        </a>
+                      </div>
+                    )}
                   </div>
-                )}
-                 <button 
-                    onClick={() => setSelectedAlert(null)} 
-                    className="mt-4 w-full text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-3 rounded-md transition duration-150"
-                  >
-                    Cerrar Detalles
-                  </button>
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center py-10">Selecciona un pin en el mapa para ver los detalles de la alerta, o usa los filtros para refinar tu búsqueda.</p>
-            )}
-          </div>
+                </Popup>
+              </Marker>
+            ))}
+            {mapMode === 'pollingPlaces' && pollingPlaces.map(place => (
+              place.latitude && place.longitude && // Ensure place has coordinates
+              <Marker 
+                key={place.id} 
+                position={[place.latitude, place.longitude]}
+                icon={getCustomMapIcon('pollingPlace')}
+              >
+                <Popup minWidth={250}>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-purple-700 flex items-center">
+                      {getDetailIcon('pollingPlace')}
+                      {place.name}
+                    </h3>
+                    <p className="text-sm text-gray-700"><strong className="font-medium">Dirección:</strong> {place.address}, {place.city}</p>
+                    {place.openingHours && <p className="text-xs text-gray-500 flex items-center"><ClockIcon className="h-3 w-3 mr-1.5"/>Horario: {place.openingHours}</p>}
+                    {/* Add more details if needed */}
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
         </div>
       )}
-       <p className="text-xs text-gray-500 mt-4 text-center">Datos de mapa y ubicación son simulados. En una aplicación real, se usaría Leaflet.js con OpenStreetMap o similar.</p>
+       <p className="text-xs text-gray-500 mt-4 text-center">Datos de mapa provistos por OpenStreetMap. Interactúa con los marcadores para más detalles.</p>
     </div>
   );
 };

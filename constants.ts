@@ -26,15 +26,17 @@ export const API_ENDPOINTS = {
   GET_APP_SETTINGS: '/.netlify/functions/getAppSettings', // GET
   UPDATE_APP_SETTINGS: '/.netlify/functions/updateAppSettings', // POST
 
-  // Missing endpoints from campaignService
-  GET_CAMPAIGN_STATS: '/.netlify/functions/getCampaignStats', // GET (was missing)
-  REGISTER_CAMPAIGN_USER: '/.netlify/functions/registerCampaignUser', // POST (was missing, for general sympathizer registration)
-  GET_ALERTS: '/.netlify/functions/getAlerts', // GET (was missing)
-  SUBMIT_ALERT: '/.netlify/functions/submitAlert', // POST (was missing)
-  HANDLE_CHATBOT: '/.netlify/functions/handleChatbot', // POST (was missing)
-  GET_MY_TEAM: '/.netlify/functions/getMyTeam', // GET (was missing)
-  SEND_MESSAGE_TO_TEAM: '/.netlify/functions/sendMessageToTeam', // POST (was missing)
-  GET_USER_PROFILE: '/.netlify/functions/getUserProfile', // GET (was missing)
+  // Endpoints para "Mi Campaña" (simulados o reales)
+  GET_CAMPAIGN_STATS: '/.netlify/functions/getCampaignStats', 
+  REGISTER_CAMPAIGN_USER: '/.netlify/functions/registerCampaignUser',
+  GET_ALERTS: '/.netlify/functions/getAlerts', 
+  SUBMIT_ALERT: '/.netlify/functions/submitAlert',
+  HANDLE_CHATBOT: '/.netlify/functions/gemini-chatbot', // Actualizado para el chatbot Gemini
+  GET_MY_TEAM: '/.netlify/functions/getMyTeam', 
+  SEND_MESSAGE_TO_TEAM: '/.netlify/functions/sendMessageToTeam', 
+  GET_USER_PROFILE: '/.netlify/functions/getUserProfile',
+  LOGIN_MI_CAMPANA: '/.netlify/functions/loginMiCampana', // Asumiendo que tendrás una función para esto
+  REGISTER_DEMO_USER: '/.netlify/functions/registerDemoUser', // Asumiendo
 };
 
 export const SOCIAL_LINKS = {

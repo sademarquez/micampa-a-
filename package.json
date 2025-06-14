@@ -13,7 +13,9 @@
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.2",
     "@heroicons/react": "^2.2.0",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "leaflet": "^1.9.4",
+    "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
