@@ -1,4 +1,7 @@
-
+// This file is no longer actively used by the MainLayout in the new design.
+// The social media links might be integrated differently if needed.
+// Content is preserved here for reference if it needs to be reinstated.
+/*
 import React from 'react';
 import { SOCIAL_LINKS } from '../constants';
 
@@ -28,3 +31,7 @@ const SocialMediaLinks: React.FC = () => {
 };
 
 export default SocialMediaLinks;
+*/
+
+// Empty export to satisfy module system if nothing else is exported.
+export {};

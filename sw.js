@@ -1,5 +1,4 @@
-
-const CACHE_NAME = 'pwa-electoral-cache-v1'; // Nombre de caché actualizado
+const CACHE_NAME = 'mi-campana-ia-cache-v1'; // Nombre de caché actualizado
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
@@ -85,7 +84,7 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('push', event => {
-  const data = event.data ? event.data.json() : { title: 'Nueva Notificación', body: 'Tienes una nueva actualización de PWA Electoral.' };
+  const data = event.data ? event.data.json() : { title: 'Nueva Notificación Mi Campaña', body: 'Tienes una nueva actualización de Mi Campaña IA.' };
   const title = data.title;
   const options = {
     body: data.body,

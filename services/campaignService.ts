@@ -4,9 +4,10 @@ import { User, Alert, CampaignStats, UserRole, AlertType, AlertStatus, NewsItem,
 
 // Simulación de la base de datos en memoria (para pruebas sin backend real)
 let mockUsers: User[] = [
-  { userID: 'admin1', nombreCompleto: 'Admin General', telefono: '3001234567', email: 'admin@campana.com', municipio: 'Bogotá', barrioVereda: 'Chapinero', rol: UserRole.ADMINISTRADOR, puntosCompromiso: 100, fechaRegistro: new Date().toISOString() },
-  { userID: 'lider1', nombreCompleto: 'Líder Ana Pérez', telefono: '3011234568', email: 'lider.ana@campana.com', municipio: 'Cali', barrioVereda: 'San Fernando', rol: UserRole.LIDER_MUNICIPAL, puntosCompromiso: 50, fechaRegistro: new Date().toISOString() },
-  { userID: 'simpatizante1', nombreCompleto: 'Carlos Ruiz', telefono: '3021234569', email: 'carlos.ruiz@example.com', municipio: 'Medellín', barrioVereda: 'Poblado', rol: UserRole.SIMPATIZANTE, puntosCompromiso: 5, fechaRegistro: new Date().toISOString(), liderReferenteID: 'lider1' },
+  { userID: 'admin1', nombreCompleto: 'Admin General', telefono: '3001234567', email: 'admin@campana.com', municipio: 'Bogotá', barrioVereda: 'Chapinero', rol: UserRole.ADMINISTRADOR, puntosCompromiso: 100, fechaRegistro: new Date().toISOString(), profileImageUrl: 'https://picsum.photos/seed/admin/150/150', welcomeMessage: 'Bienvenido Admin!' },
+  { userID: 'lider1', nombreCompleto: 'Líder Ana Pérez', telefono: '3011234568', email: 'lider.ana@campana.com', municipio: 'Cali', barrioVereda: 'San Fernando', rol: UserRole.LIDER_MUNICIPAL, puntosCompromiso: 50, fechaRegistro: new Date().toISOString(), profileImageUrl: 'https://picsum.photos/seed/lider1/150/150', welcomeMessage: 'Hola Líder Ana!' },
+  { userID: 'simpatizante1', nombreCompleto: 'Carlos Ruiz', telefono: '3021234569', email: 'carlos.ruiz@example.com', municipio: 'Medellín', barrioVereda: 'Poblado', rol: UserRole.SIMPATIZANTE, puntosCompromiso: 5, fechaRegistro: new Date().toISOString(), liderReferenteID: 'lider1', profileImageUrl: 'https://picsum.photos/seed/simpatizante1/150/150' },
+  { userID: 'demoUser', nombreCompleto: 'Usuario Demo', telefono: '3000000000', email: 'demo.user@campana.com', municipio: 'Ciudad Demo', barrioVereda: 'Centro Demo', rol: UserRole.LIDER_MUNICIPAL, puntosCompromiso: 25, fechaRegistro: new Date().toISOString(), profileImageUrl: 'https://picsum.photos/seed/demouser/150/150', welcomeMessage: 'Bienvenido Usuario Demo, ¡explora la app!' },
 ];
 
 let mockAlerts: Alert[] = [
@@ -28,6 +29,48 @@ const simulateApiCall = <T,>(data: T, delay = 500): Promise<T> => {
 // En una app real, usarías fetch o axios para llamar a API_ENDPOINTS.variable
 // y el backend (Netlify Function) interactuaría con Google Sheets.
 
+export const loginMiCampanaUser = async (email: string, pass: string): Promise<AuthenticatedUser> => {
+  console.log(`Intentando login para Mi Campaña con email: ${email}`);
+  const trimmedEmail = email.trim(); // Trim whitespace from input email
+  const userFound = mockUsers.find(u => u.email.toLowerCase() === trimmedEmail.toLowerCase());
+  
+  // Para la simulación, cualquier usuario en mockUsers puede loguearse con "password123"
+  if (userFound && pass === "password123") {
+    // Aseguramos que el objeto devuelto sea compatible con AuthenticatedUser
+    // La interface User ya incluye los campos opcionales profileImageUrl y welcomeMessage
+    return simulateApiCall(userFound as AuthenticatedUser);
+  }
+  console.error(`Login fallido. User found: ${!!userFound}, Pass correct: ${pass === "password123"}`);
+  throw new Error("Credenciales inválidas");
+};
+
+export const registerAndLoginDemoUser = async (): Promise<AuthenticatedUser> => {
+  console.log('Registrando y logueando usuario demo...');
+  let demoUser = mockUsers.find(u => u.userID === 'demoUser');
+
+  if (!demoUser) {
+    demoUser = {
+      userID: 'demoUser',
+      nombreCompleto: 'Usuario de Demostración',
+      email: 'demo.user@campana.com',
+      telefono: '123456789',
+      municipio: 'DemoCiudad',
+      barrioVereda: 'DemoBarrio',
+      rol: UserRole.LIDER_MUNICIPAL, // Asignar un rol con permisos amplios para demo
+      puntosCompromiso: 10,
+      fechaRegistro: new Date().toISOString(),
+      profileImageUrl: 'https://picsum.photos/seed/demouser/150/150',
+      welcomeMessage: '¡Bienvenido Usuario Demo! Explora todas las funciones.'
+    };
+    mockUsers.push(demoUser);
+    console.log('Nuevo usuario demo creado y añadido a mockUsers.');
+  } else {
+    console.log('Usuario demo existente encontrado.');
+  }
+  return simulateApiCall(demoUser as AuthenticatedUser);
+};
+
+
 export const getCampaignStats = async (): Promise<CampaignStats> => {
   console.log(`Llamando a mock ${API_ENDPOINTS.GET_CAMPAIGN_STATS}`);
   const stats: CampaignStats = {
@@ -37,12 +80,14 @@ export const getCampaignStats = async (): Promise<CampaignStats> => {
   return simulateApiCall(stats);
 };
 
+// Esta función de registro detallado se mantiene por si se necesita más adelante,
+// pero no se usará para el flujo de "Entrar como Usuario Demo".
 export const registerUser = async (userData: Omit<User, 'userID' | 'rol' | 'puntosCompromiso' | 'fechaRegistro'>): Promise<User> => {
-  console.log(`Llamando a mock ${API_ENDPOINTS.REGISTER_CAMPAIGN_USER}`, userData);
+  console.log(`Llamando a mock ${API_ENDPOINTS.REGISTER_CAMPAIGN_USER} (registro detallado)`, userData);
   const newUser: User = {
     ...userData,
-    userID: `user${Date.now()}`, // Simular ID de Netlify Identity
-    rol: UserRole.SIMPATIZANTE, // Default role for new registrations via this function
+    userID: `user${Date.now()}`, 
+    rol: UserRole.SIMPATIZANTE, 
     puntosCompromiso: POINTS_SYSTEM.REGISTER,
     fechaRegistro: new Date().toISOString(),
   };
@@ -76,13 +121,12 @@ export const submitAlert = async (alertData: Omit<Alert, 'alertaID' | 'estado' |
     fechaReporte: new Date().toISOString(),
     nombreReportador: reporterUser?.nombreCompleto || 'Desconocido',
   };
-  mockAlerts.unshift(newAlert); // Add to beginning of array
+  mockAlerts.unshift(newAlert); 
   
   const reporter = mockUsers.find(u => u.userID === alertData.reportadoPorUserID);
   if (reporter) {
     reporter.puntosCompromiso += POINTS_SYSTEM.REPORT_ALERT;
   }
-  // Simular llamada a sendWhatsAppAlert (Netlify Function llamaría a otra Netlify Function o servicio de Twilio)
   console.log('Simulando envío de notificación WhatsApp a administradores...');
   return simulateApiCall(newAlert);
 };
@@ -93,7 +137,7 @@ export const handleChatbot = async (message: string): Promise<string> => {
   const lowerMessage = message.toLowerCase();
 
   if (lowerMessage.includes('registrarme') || lowerMessage.includes('registro')) {
-    response = "Puedes registrarte haciendo clic en 'Registrarse' en el menú. Necesitarás tu nombre, teléfono, municipio y barrio/vereda.";
+    response = "Puedes entrar como usuario demo haciendo clic en 'Entrar como Usuario Demo' en la pantalla de inicio de sesión, en la sección de 'Crear Cuenta'.";
   } else if (lowerMessage.includes('propuestas')) {
     response = "Las propuestas de Ximena López Yule se centran en el desarrollo social, apoyo a víctimas, y fortalecimiento comunitario en el Pacífico colombiano. Puedes ver más detalles en la sección de Noticias o en sus redes sociales.";
   } else if (lowerMessage.includes('ayudar') || lowerMessage.includes('colaborar')) {
@@ -115,7 +159,6 @@ export const getMyTeam = async (leaderId: string): Promise<User[]> => {
 
 export const sendMessageToTeam = async (leaderId: string, message: string): Promise<{ success: boolean; message: string }> => {
   console.log(`Llamando a mock ${API_ENDPOINTS.SEND_MESSAGE_TO_TEAM} para líder: ${leaderId} con mensaje: "${message}"`);
-  // Simulación: aquí se enviaría el mensaje (ej. vía WhatsApp a través de Netlify Function)
   const team = mockUsers.filter(user => user.liderReferenteID === leaderId);
   console.log(`Mensaje enviado a ${team.length} miembros del equipo de ${leaderId}.`);
   return simulateApiCall({ success: true, message: `Mensaje enviado a ${team.length} miembros.` });
@@ -123,9 +166,6 @@ export const sendMessageToTeam = async (leaderId: string, message: string): Prom
 
 export const getUserProfile = async (userId: string): Promise<User | null> => {
     console.log(`Llamando a mock ${API_ENDPOINTS.GET_USER_PROFILE} para userID: ${userId}`);
-    // This function seems to get a generic user profile from the mockUsers list
-    // The AuthenticatedUser in AuthContext is the candidate themselves.
-    // If this is meant to get ANY user's profile:
     const user = mockUsers.find(u => u.userID === userId);
     return simulateApiCall(user || null);
 };
@@ -135,40 +175,26 @@ export const getNewsFeed = async (): Promise<NewsItem[]> => {
     return simulateApiCall(mockNews);
 };
 
-// Function to update user role (simulated admin action or gamification trigger)
 export const updateUserRoleInMockDB = (userId: string, newRole: UserRole): User | null => {
     const userIndex = mockUsers.findIndex(u => u.userID === userId);
     if (userIndex !== -1) {
         mockUsers[userIndex].rol = newRole;
-        // Also update the candidate's specific fields if this user is the candidate
-        if (mockCandidate.userID === userId) { // Corrected: mockCandidate.id to mockCandidate.userID
-            // This part might be tricky if Candidate and User are separate.
-            // Assuming `AuthenticatedUser` (the candidate) is also in `mockUsers`.
-            // For this PWA, user in AuthContext IS the candidate.
-            // Here we are updating a generic user's role.
-        }
         return mockUsers[userIndex];
     }
     return null;
 }
 
-// Mock candidate data - this is specific to the "PWA Electoral Pro" which is candidate-centric
-// For the "Mi Campaña" app, the logged-in user (from AuthContext) is the one whose profile is being managed.
-// The `AuthenticatedUser` now has all User fields, so `user.nombreCompleto` etc. will work.
-let mockCandidate: AuthenticatedUser = {
-    userID: 'cand001', // Changed 'id' to 'userID' to match User interface
-    nombreCompleto: 'Ximena López Yule', // Changed 'fullName' to 'nombreCompleto'
+let mockCandidate: AuthenticatedUser = { 
+    userID: 'cand001', 
+    nombreCompleto: 'Ximena López Yule', 
     email: 'ximena.lopez@example.com',
-    profileImageUrl: 'https://picsum.photos/seed/candidate/150/150', // This URL is used in HomePage
+    profileImageUrl: 'https://picsum.photos/seed/candidate/150/150', 
     welcomeMessage: '¡Uniendo fuerzas por el desarrollo social y el bienestar de las comunidades del Pacífico Colombiano!',
-    rol: UserRole.ADMINISTRADOR, // Candidate is an admin of their own campaign
+    rol: UserRole.ADMINISTRADOR, 
     puntosCompromiso: 1000,
     fechaRegistro: new Date().toISOString(),
-    // Other User fields can be added if necessary
   };
   
-  // This function is for the specific "PWA Electoral Pro" which this service seems to also contain mocks for
-  // For "Mi Campaña", use useAuth().user for candidate data
   export const getElectoralCandidateProfile = async (): Promise<AuthenticatedUser> => {
     return simulateApiCall(mockCandidate);
   };

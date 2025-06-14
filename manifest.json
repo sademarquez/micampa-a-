@@ -1,7 +1,6 @@
-
 {
-  "short_name": "PWA Electoral",
-  "name": "PWA Electoral Pro - Gestión de Campaña",
+  "short_name": "Mi Campaña",
+  "name": "Mi Campaña IA - Ximena López Yule",
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
@@ -46,9 +45,9 @@
     }
   ],
   "start_url": "/",
-  "background_color": "#F3F4F6", /* bg-gray-100 */
+  "background_color": "#E0F2FE", 
   "display": "standalone",
   "scope": "/",
-  "theme_color": "#3B82F6", /* blue-500 */
-  "description": "Herramienta PWA para la gestión moderna de campañas electorales."
+  "theme_color": "#00AEEF", 
+  "description": "Plataforma digital para la campaña de Ximena López Yule, enfocada en la organización de simpatizantes y gestión territorial."
 }

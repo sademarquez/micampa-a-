@@ -1,28 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { CampaignStats, NewsItem } from '../types';
-import { getCampaignStats, getNewsFeed } from '../services/campaignService';
+import { CampaignStats } from '../types';
+import { getCampaignStats } from '../services/campaignService';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { UsersIcon, ShieldCheckIcon, NewspaperIcon, CalendarDaysIcon as CalendarIcon } from '@heroicons/react/24/outline';
+import { 
+  UsersIcon, 
+  ShieldCheckIcon, 
+  UserPlusIcon, 
+  DocumentChartBarIcon, 
+  WrenchScrewdriverIcon as StructureIcon, // Using WrenchScrewdriver for "Estructura" as more generic
+  InformationCircleIcon as ReportsIcon, // Using Info for generic "Informes"
+  MapPinIcon as PollingPlaceIcon,
+  GlobeEuropeAfricaIcon as VoterLocationIcon, // Using Globe for "Ubicación Votantes"
+  MegaphoneIcon // For "Reporte de Publicidad", using Megaphone
+} from '@heroicons/react/24/outline';
+
+interface ModuleLink {
+  to: string;
+  text: string;
+  icon: React.ElementType;
+  description: string;
+}
+
+const moduleLinks: ModuleLink[] = [
+  // These are based on the first image's list of modules under the curved header
+  // Assuming the user is a leader/admin to see all these
+  { to: '/#', text: 'Reporte de publicidad', icon: MegaphoneIcon, description: 'Gestiona y analiza tus campañas.' }, // Placeholder link
+  { to: '/#', text: 'Registrar votante', icon: UserPlusIcon, description: 'Añade nuevos simpatizantes.' }, // Placeholder link
+  { to: '/panel-lider', text: 'Estructura', icon: StructureIcon, description: 'Organiza tu equipo de campaña.' }, // Panel de Lider for structure
+  { to: '/#', text: 'Informes', icon: ReportsIcon, description: 'Visualiza datos y progreso.' }, // Placeholder link
+  { to: '/#', text: 'Lugar de Votación', icon: PollingPlaceIcon, description: 'Consulta puestos de votación.' }, // Placeholder link
+  { to: '/mapa-alertas', text: 'Ubicación Votantes', icon: VoterLocationIcon, description: 'Visualiza alertas en el mapa.' }, // MapAlerts for Voter Location concept
+];
+
 
 const HomePage: React.FC = () => {
   const [stats, setStats] = useState<CampaignStats | null>(null);
-  const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [campaignStats, newsData] = await Promise.all([
-          getCampaignStats(),
-          getNewsFeed()
-        ]);
+        const campaignStats = await getCampaignStats();
         setStats(campaignStats);
-        setNews(newsData);
       } catch (error) {
-        console.error("Error al cargar datos de la página de inicio:", error);
-        // Podrías setear un estado de error aquí para mostrar en la UI
+        console.error("Error al cargar datos del dashboard:", error);
       } finally {
         setLoading(false);
       }
@@ -31,79 +54,51 @@ const HomePage: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <LoadingSpinner message="Cargando datos de la campaña..." />;
+    return (
+      <div className="flex justify-center items-center py-10">
+        <LoadingSpinner message="Cargando dashboard..." />
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-12">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-12 px-6 rounded-lg shadow-xl text-center">
-        <img src="https://picsum.photos/seed/candidate/150/150" alt="Ximena López Yule" className="w-32 h-32 rounded-full mx-auto mb-6 border-4 border-white shadow-lg" />
-        <h1 className="text-4xl font-bold mb-4">¡Bienvenido a la campaña de Ximena López Yule!</h1>
-        <p className="text-xl mb-8 max-w-2xl mx-auto">
-          Uniendo fuerzas por el desarrollo social y el bienestar de las comunidades del Pacífico Colombiano.
-          Tu participación es clave para construir un futuro mejor.
-        </p>
-        <Link
-          to="/registro"
-          className="bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-bold py-3 px-8 rounded-lg text-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105"
-        >
-          Únete a la Campaña
-        </Link>
-      </section>
-
-      {/* Stats Section */}
+    <div className="space-y-6">
+      {/* Stats Section - adapting the style from previous version */}
       {stats && (
-        <section className="grid md:grid-cols-2 gap-6 text-center">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <UsersIcon className="h-12 w-12 text-indigo-600 mx-auto mb-3" />
-            <h2 className="text-3xl font-bold text-indigo-700">{stats.numeroMiembros.toLocaleString()}</h2>
-            <p className="text-gray-600">Miembros Comprometidos</p>
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className="bg-white p-4 rounded-lg shadow-md text-center">
+            <UsersIcon className="h-10 w-10 text-sky-500 mx-auto mb-2" />
+            <p className="text-2xl font-bold text-gray-700">{stats.numeroMiembros.toLocaleString()}</p>
+            <p className="text-xs text-gray-500">Miembros</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <ShieldCheckIcon className="h-12 w-12 text-green-500 mx-auto mb-3" />
-            <h2 className="text-3xl font-bold text-green-600">{stats.numeroAlertasAtendidas.toLocaleString()}</h2>
-            <p className="text-gray-600">Alertas Comunitarias Atendidas</p>
+          <div className="bg-white p-4 rounded-lg shadow-md text-center">
+            <ShieldCheckIcon className="h-10 w-10 text-green-500 mx-auto mb-2" />
+            <p className="text-2xl font-bold text-gray-700">{stats.numeroAlertasAtendidas.toLocaleString()}</p>
+            <p className="text-xs text-gray-500">Alertas Atendidas</p>
           </div>
-        </section>
+        </div>
       )}
 
-      {/* News/Events Feed Section */}
-      <section>
-        <h2 className="text-3xl font-semibold text-gray-800 mb-6 flex items-center">
-          <NewspaperIcon className="h-8 w-8 mr-3 text-indigo-600" />
-          Noticias y Eventos Recientes
-        </h2>
-        {news.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {news.map((item) => (
-              <div key={item.id} className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
-                {item.imagenUrl && <img src={item.imagenUrl} alt={item.titulo} className="w-full h-48 object-cover"/>}
-                <div className="p-6 flex flex-col flex-grow">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">{item.titulo}</h3>
-                  <p className="text-gray-600 text-sm mb-3 flex items-center">
-                    <CalendarIcon className="h-4 w-4 mr-2 text-gray-500" />
-                    {new Date(item.fecha).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
-                  </p>
-                  <p className="text-gray-700 mb-4 flex-grow">{item.resumen}</p>
-                  {item.enlace && (
-                    <a
-                      href={item.enlace}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-auto text-indigo-600 hover:text-indigo-800 font-semibold transition duration-300"
-                    >
-                      Leer más &rarr;
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-600">No hay noticias o eventos recientes.</p>
-        )}
-      </section>
+      {/* Module Links Section */}
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold text-gray-700 mb-3 px-1">Acciones Rápidas</h2>
+        {moduleLinks.map((link) => (
+          <Link
+            key={link.text}
+            to={link.to}
+            className="flex items-center bg-white p-4 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:scale-[1.02]"
+          >
+            <link.icon className="h-8 w-8 text-sky-500 mr-4 flex-shrink-0" />
+            <div className="flex-grow">
+              <h3 className="text-base font-semibold text-gray-800">{link.text}</h3>
+              <p className="text-xs text-gray-500">{link.description}</p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 };
