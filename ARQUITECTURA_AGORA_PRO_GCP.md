@@ -215,103 +215,51 @@ async function processVoterEvent(req, res) {
 - ✅ **Reintentos Automáticos**: Backoff exponencial
 - ✅ **Garantías de Entrega**: At-least-once delivery
 
-## 🗺️ Mapa Sinóptico de la Arquitectura Paralela
+## 🧠 El Patrón de Cascada de IA de Agora: "No uses un martillo neumático para clavar una tachuela"
+
+Esta mejora introduce una capa de inteligencia en la clasificación de tareas para optimizar radicalmente los costos y la eficiencia. El principio es simple: **aplicar el modelo de IA de menor costo y complejidad que pueda resolver la tarea satisfactoriamente.**
+
+### 1. El Nuevo Rol del Agente "Clasificador"
+
+El primer flujo de n8n ("Clasificador") que se activa desde `topic-ingestion` se vuelve más inteligente:
+
+1.  **Análisis de Intención Simple:** Clasifica inicialmente la solicitud (pregunta simple, compleja, saludo).
+2.  **Primer Intento con IA Gratuita (Gemini Free Tier):** Para preguntas potencialmente complejas, intenta resolverlas con el modelo gratuito de Gemini, usando un prompt específico.
+    -   **Prompt para el Modelo Gratuito:** `"Eres un asistente de primer nivel. Responde a la siguiente pregunta de forma concisa. Si la pregunta es demasiado compleja, ambigua, requiere contexto previo o un análisis profundo, responde únicamente con la palabra 'ESCALAR'."`
+3.  **Decisión de Enrutamiento Inteligente:**
+    -   **Éxito a Bajo Costo:** Si la respuesta del modelo gratuito **NO** es `"ESCALAR"`, la respuesta se publica directamente en `topic-outgoing-messages`. El problema se resuelve de forma económica sin tocar los workers más caros.
+    -   **Escalamiento a Pro:** Si la respuesta es `"ESCALAR"`, el clasificador publica el mensaje original en `topic-ai-pro` para que sea manejado por un worker especializado con un modelo de IA superior.
+
+### 2. Redefinición de los Tópicos de Procesamiento
+
+-   **`topic-ingestion`**: La puerta de entrada universal.
+-   **`topic-faq`**: Para preguntas con respuestas predefinidas.
+-   **`topic-ai-pro` (Nuevo)**: Tópico para tareas que requieren el poder del modelo Gemini Pro, explícitamente escaladas.
+-   **`topic-human-escalation`**: Para la intervención del equipo humano.
+-   **`topic-outgoing-messages`**: La cola de salida unificada.
+
+## 🗺️ Mapa Sinóptico de la Arquitectura en Cascada
 
 ```mermaid
-graph TD
-    subgraph "Interfaz y Entrada"
-        A[PWA en Netlify] --> B{Google Cloud Load Balancer};
+flowchart TD
+    A["Evento entra en `topic-ingestion`"] --> B{"n8n 'Clasificador'"};
+    B --> C{"Análisis Inicial"};
+    C -- "Pregunta FAQ" --> D["Publicar en `topic-faq`"];
+    C -- "Saludo/Simple" --> E["Generar respuesta simple y publicar en `topic-outgoing`"];
+    C -- "Pregunta potencialmente compleja" --> F{"Llamar a API Gemini Gratuito"};
+    
+    F --> G{"¿Respuesta fue 'ESCALAR'?"};
+    G -- "NO" --> H["Tomar respuesta y publicar en `topic-outgoing`"];
+    G -- "SÍ" --> I["Publicar en `topic-ai-pro`"];
+
+    subgraph "Procesamiento Avanzado"
+        I --> J{"Worker n8n 'IA Pro'"};
+        J -- "Llama a API Gemini Pro" --> K["Genera respuesta compleja"];
+        K --> H;
     end
-
-    B --> C(Tópico de Pub/Sub: 'eventos-electorales');
-
-    subgraph "Procesamiento Asíncrono y Paralelo en GCP"
-        C -- Push --> D{Webhook en n8n};
-
-        subgraph "Clúster de n8n en GKE (Autoescalable)"
-            D -- n8n Worker 1 --- E[(Memorystore for Redis)];
-            D -- n8n Worker 2 --- E;
-            D -- n8n Worker n --- E;
-        end
-        
-        E -- (Caché y Estado)
-        
-        D -- Llamadas Paralelas --> F((API de Google Gemini));
-    end
-
-    subgraph "Servicios de Apoyo"
-        G[Cloud SQL - PostgreSQL] --> H[Supabase];
-        I[Cloud Storage] --> J[Archivos y Media];
-        K[Cloud Functions] --> L[Procesamiento Adicional];
-    end
-
-    style C fill:#F4B400,color:#fff
-    style D fill:#90ee90
-    style E fill:#DB4437,color:#fff
-    style F fill:#0F9D58,color:#fff
-    style G fill:#4285F4,color:#fff
-    style I fill:#34A853,color:#fff
 ```
 
-## 🔧 Implementación Técnica
-
-### **1. Configuración de GKE**
-```bash
-# Crear clúster GKE
-gcloud container clusters create agora-cluster \
-  --zone=us-central1-a \
-  --num-nodes=3 \
-  --enable-autoscaling \
-  --min-nodes=1 \
-  --max-nodes=10 \
-  --machine-type=e2-standard-4 \
-  --enable-autorepair \
-  --enable-autoupgrade
-
-# Configurar kubectl
-gcloud container clusters get-credentials agora-cluster --zone=us-central1-a
-```
-
-### **2. Despliegue de n8n en GKE**
-```bash
-# Aplicar configuraciones
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/n8n-deployment.yaml
-kubectl apply -f k8s/n8n-service.yaml
-kubectl apply -f k8s/n8n-hpa.yaml
-kubectl apply -f k8s/n8n-ingress.yaml
-```
-
-### **3. Configuración de Memorystore**
-```bash
-# Crear instancia Redis
-gcloud redis instances create agora-redis \
-  --size=5 \
-  --region=us-central1 \
-  --redis-version=redis_6_x \
-  --tier=STANDARD
-
-# Obtener IP interna
-REDIS_IP=$(gcloud redis instances describe agora-redis \
-  --region=us-central1 --format="value(host)")
-```
-
-### **4. Configuración de Pub/Sub**
-```bash
-# Crear tópicos
-gcloud pubsub topics create eventos-electorales
-gcloud pubsub topics create procesamiento-mensajes
-gcloud pubsub topics create analisis-datos
-
-# Crear suscripciones
-gcloud pubsub subscriptions create procesamiento-votantes \
-  --topic=eventos-electorales \
-  --push-endpoint=https://n8n-agora.webhook.gcp.com/webhook/votantes
-
-gcloud pubsub subscriptions create envio-mensajes \
-  --topic=procesamiento-mensajes \
-  --push-endpoint=https://n8n-agora.webhook.gcp.com/webhook/mensajes
-```
+## 📈 Monitoreo y Alertas con Google Cloud's operations suite
 
 ## 📊 Métricas y Monitoreo
 
