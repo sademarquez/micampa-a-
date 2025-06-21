@@ -1,125 +1,77 @@
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-
-import Login from "./pages/Login";
-import Index from "./pages/Index";
-import Dashboard from "./pages/Dashboard";
-import MapaAlertas from "./pages/MapaAlertas";
-import Registro from "./pages/Registro";
-import Configuracion from "./pages/Configuracion";
-import Informes from "./pages/Informes";
-import Liderazgo from "./pages/Liderazgo";
-import RedAyudantes from "./pages/RedAyudantes";
-import TasksPage from "./pages/TasksPage";
-import EventsPage from "./pages/EventsPage";
-import QuickActionsPage from "./pages/QuickActionsPage";
-import VisitorFunnelPage from "./pages/VisitorFunnelPage";
-import MobileAuditPage from "./pages/MobileAuditPage";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
 import { SecureAuthProvider } from "./contexts/SecureAuthContext";
-import ModernMobileNavigation from './components/ModernMobileNavigation';
-import ProtectedRoute from './components/ProtectedRoute';
-import N8NComponentsManager from './components/N8NComponentsManager';
+import { ModernErrorBoundary } from "./components/ModernErrorBoundary";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Login from "./pages/Login";
+import Registro from "./pages/Registro";
+import Dashboard from "./pages/Dashboard";
+import Liderazgo from "./pages/Liderazgo";
 import Estructura from "./pages/Estructura";
 import DeveloperPage from "./pages/Developer";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5,
-      gcTime: 1000 * 60 * 10,
-    },
-  },
-})
+import { ModernNavigation } from "./components/ModernNavigation";
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <ModernErrorBoundary>
       <SecureAuthProvider>
-        <BrowserRouter>
-          <div className="min-h-screen bg-gradient-to-br from-negro-50 to-verde-sistema-50">
-            <ModernMobileNavigation />
-            
+        <Router>
+          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
             <Routes>
-              <Route path="/" element={<Navigate to="/login" replace />} />
-              
-              {/* Páginas públicas */}
+              {/* Rutas públicas */}
               <Route path="/login" element={<Login />} />
-              <Route path="/index" element={<Index />} />
-              <Route path="/visitor-funnel" element={<VisitorFunnelPage />} />
-              <Route path="/mobile-audit" element={<MobileAuditPage />} />
+              <Route path="/registro" element={<Registro />} />
               
-              {/* Páginas protegidas */}
-              <Route path="/dashboard" element={
+              {/* Rutas protegidas con navegación moderna */}
+              <Route path="/" element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <div className="flex h-screen">
+                    <ModernNavigation />
+                    <main className="flex-1 overflow-auto">
+                      <Dashboard />
+                    </main>
+                  </div>
                 </ProtectedRoute>
               } />
-              <Route path="/n8n-manager" element={
-                <ProtectedRoute>
-                  <N8NComponentsManager />
-                </ProtectedRoute>
-              } />
-              <Route path="/mapa-alertas" element={
-                <ProtectedRoute>
-                  <MapaAlertas />
-                </ProtectedRoute>
-              } />
-              <Route path="/registro" element={
-                <ProtectedRoute>
-                  <Registro />
-                </ProtectedRoute>
-              } />
-              <Route path="/configuracion" element={
-                <ProtectedRoute>
-                  <Configuracion />
-                </ProtectedRoute>
-              } />
-              <Route path="/informes" element={
-                <ProtectedRoute>
-                  <Informes />
-                </ProtectedRoute>
-              } />
+              
               <Route path="/liderazgo" element={
                 <ProtectedRoute>
-                  <Liderazgo />
+                  <div className="flex h-screen">
+                    <ModernNavigation />
+                    <main className="flex-1 overflow-auto">
+                      <Liderazgo />
+                    </main>
+                  </div>
                 </ProtectedRoute>
               } />
-              <Route path="/estructura" element={<Estructura />} />
-              <Route path="/developer" element={<DeveloperPage />} />
-              <Route path="/red-ayudantes" element={
+              
+              <Route path="/estructura" element={
                 <ProtectedRoute>
-                  <RedAyudantes />
+                  <div className="flex h-screen">
+                    <ModernNavigation />
+                    <main className="flex-1 overflow-auto">
+                      <Estructura />
+                    </main>
+                  </div>
                 </ProtectedRoute>
               } />
-              <Route path="/tareas" element={
+              
+              <Route path="/developer" element={
                 <ProtectedRoute>
-                  <TasksPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/eventos" element={
-                <ProtectedRoute>
-                  <EventsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/acciones-rapidas" element={
-                <ProtectedRoute>
-                  <QuickActionsPage />
+                  <div className="flex h-screen">
+                    <ModernNavigation />
+                    <main className="flex-1 overflow-auto">
+                      <DeveloperPage />
+                    </main>
+                  </div>
                 </ProtectedRoute>
               } />
             </Routes>
-            
-            <div className="fixed bottom-0 left-0 right-0 bg-negro-900/90 backdrop-blur-sm border-t border-verde-sistema-200 py-2 px-4 text-center text-xs text-verde-sistema-400 z-10">
-              © 2025 Sistema Electoral - MI CAMPAÑA. Todos los derechos reservados.
-            </div>
+            <Toaster />
           </div>
-        </BrowserRouter>
+        </Router>
       </SecureAuthProvider>
-    </QueryClientProvider>
+    </ModernErrorBoundary>
   );
 }
 
