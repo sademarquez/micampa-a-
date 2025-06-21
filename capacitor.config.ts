@@ -1,14 +1,9 @@
-
 import type { CapacitorConfig } from '@capacitor/cli';
 
-const config: CapacitorConfig = {
+export const defaultConfig: CapacitorConfig = {
   appId: 'com.micampana.electoral2025',
   appName: 'MI CAMPAÑA 2025',
   webDir: 'dist',
-  server: {
-    url: 'https://0104ad57-5112-4547-bf3c-092c7fdb1b88.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
@@ -60,9 +55,8 @@ const config: CapacitorConfig = {
     contentInset: 'automatic',
     scrollEnabled: true,
     preferredContentMode: 'mobile',
-    allowsLinkPreview: false,
-    handleApplicationURL: true
+    allowsLinkPreview: false
   }
 };
 
-export default config;
+export default defaultConfig;

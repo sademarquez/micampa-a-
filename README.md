@@ -1,73 +1,90 @@
-# Welcome to your Lovable project
+# Guía de Ejecución Multiplataforma - Agora Pro
 
-## Project info
+Este documento proporciona una guía detallada para instalar, configurar y ejecutar la aplicación en diferentes plataformas: Web, Android y iOS.
 
-**URL**: https://lovable.dev/projects/0104ad57-5112-4547-bf3c-092c7fdb1b88
+## 1. Análisis del Sistema
 
-## How can I edit this code?
+- **Framework**: React con Vite y TypeScript.
+- **UI**: Tailwind CSS y Shadcn/ui.
+- **Multiplataforma**: Capacitor para la compilación nativa en Android e iOS.
+- **Backend**: Integración con Supabase.
 
-There are several ways of editing your application.
+## 2. Prerrequisitos de Software
 
-**Use Lovable**
+Asegúrate de tener instalado el siguiente software:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0104ad57-5112-4547-bf3c-092c7fdb1b88) and start prompting.
+- **Node.js (v18 o superior)**: Incluye npm. [Descargar](https://nodejs.org/)
+- **Android Studio**: Para compilación en Android. [Descargar](https://developer.android.com/studio)
+- **Xcode (solo macOS)**: Para compilación en iOS. (Desde la Mac App Store)
+- **CocoaPods (solo macOS)**: Gestor de dependencias para iOS. Se instala con `sudo gem install cocoapods`.
 
-Changes made via Lovable will be committed automatically to this repo.
+## 3. Pasos de Instalación Inicial
 
-**Use your preferred IDE**
+1.  **Clonar el repositorio** (si aplica).
+2.  **Abrir una terminal** en la raíz del proyecto.
+3.  **Instalar dependencias de Node.js**:
+    ```bash
+    npm install
+    ```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 4. Ejecución en la Web
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Modo Desarrollo
+Ideal para programar y ver cambios en tiempo real.
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
 npm run dev
 ```
+Luego, abre tu navegador en la URL que se muestra en la terminal (usualmente `http://localhost:5173`).
 
-**Edit a file directly in GitHub**
+### Modo Producción
+Para desplegar la aplicación en un servidor web.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1.  **Compilar la aplicación**:
+    ```bash
+    npm run build
+    ```
+2.  El comando creará una carpeta `dist`. Sube el contenido de esta carpeta a tu proveedor de hosting (Netlify, Vercel, etc.).
 
-**Use GitHub Codespaces**
+## 5. Ejecución en Android
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1.  **Sincronizar los recursos web**:
+    Cada vez que hagas cambios significativos en el código web, ejecuta este comando para copiarlos al proyecto nativo.
+    ```bash
+    npm run build
+    npx cap sync android
+    ```
 
-## What technologies are used for this project?
+2.  **Abrir en Android Studio**:
+    ```bash
+    npx cap open android
+    ```
 
-This project is built with:
+3.  **Ejecutar la App**:
+    - Dentro de Android Studio, espera a que el proyecto se sincronice (Gradle Sync).
+    - Selecciona un dispositivo virtual (AVD) o uno físico conectado.
+    - Haz clic en el botón **Run 'app'** (icono de play verde).
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 6. Ejecución en iOS (Solo en macOS)
 
-## How can I deploy this project?
+1.  **Sincronizar los recursos web**:
+    ```bash
+    npm run build
+    npx cap sync ios
+    ```
 
-Simply open [Lovable](https://lovable.dev/projects/0104ad57-5112-4547-bf3c-092c7fdb1b88) and click on Share -> Publish.
+2.  **Actualizar dependencias de iOS (CocoaPods)**:
+    Este comando es importante y debe ejecutarse si hay cambios en los plugins nativos.
+    ```bash
+    npx cap update ios
+    ```
 
-## Can I connect a custom domain to my Lovable project?
+3.  **Abrir en Xcode**:
+    ```bash
+    npx cap open ios
+    ```
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+4.  **Ejecutar la App**:
+    - Dentro de Xcode, selecciona un Simulador o un dispositivo físico conectado.
+    - Asegúrate de haber configurado un **Development Team** en la sección "Signing & Capabilities" del target `App`.
+    - Haz clic en el botón de **Run** (icono de play).
