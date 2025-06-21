@@ -1,0 +1,308 @@
+
+/* Estilos de Accesibilidad Avanzada */
+
+/* Variables CSS para temas */
+:root {
+  --font-size-small: 0.875rem;
+  --font-size-medium: 1rem;
+  --font-size-large: 1.125rem;
+  --font-size-xl: 1.25rem;
+  
+  --focus-color: #3b82f6;
+  --focus-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+  
+  --high-contrast-bg: #000000;
+  --high-contrast-text: #ffffff;
+  --high-contrast-accent: #ffff00;
+}
+
+/* Solo para lectores de pantalla */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Navegación por teclado mejorada */
+.accessibility-enabled *:focus,
+.keyboard-navigation *:focus {
+  outline: 2px solid var(--focus-color) !important;
+  outline-offset: 2px !important;
+  box-shadow: var(--focus-shadow) !important;
+  border-radius: 4px !important;
+}
+
+/* Alto contraste */
+.high-contrast {
+  filter: contrast(150%) brightness(120%);
+}
+
+.high-contrast * {
+  color: var(--high-contrast-text) !important;
+  background-color: var(--high-contrast-bg) !important;
+  border-color: var(--high-contrast-accent) !important;
+}
+
+.high-contrast a,
+.high-contrast button {
+  color: var(--high-contrast-accent) !important;
+  text-decoration: underline !important;
+}
+
+/* Texto grande */
+.large-text {
+  font-size: 1.2em !important;
+  line-height: 1.6 !important;
+}
+
+.large-text * {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+
+/* Reducir movimiento */
+.reduce-motion,
+.reduce-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Tamaños de fuente dinámicos */
+[data-font-size="small"] {
+  font-size: var(--font-size-small);
+}
+
+[data-font-size="medium"] {
+  font-size: var(--font-size-medium);
+}
+
+[data-font-size="large"] {
+  font-size: var(--font-size-large);
+}
+
+[data-font-size="xl"] {
+  font-size: var(--font-size-xl);
+}
+
+/* Temas de color para daltonismo */
+[data-color-theme="dark"] {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+[data-color-theme="dark"] * {
+  background-color: inherit;
+  color: inherit;
+}
+
+[data-color-theme="protanopia"] {
+  filter: 
+    sepia(100%) 
+    saturate(0%) 
+    hue-rotate(180deg) 
+    brightness(1.2) 
+    contrast(1.1);
+}
+
+[data-color-theme="deuteranopia"] {
+  filter: 
+    sepia(100%) 
+    saturate(50%) 
+    hue-rotate(90deg) 
+    brightness(1.1) 
+    contrast(1.2);
+}
+
+[data-color-theme="tritanopia"] {
+  filter: 
+    sepia(100%) 
+    saturate(70%) 
+    hue-rotate(270deg) 
+    brightness(1.1) 
+    contrast(1.1);
+}
+
+/* Mejoras para navegación táctil */
+@media (pointer: coarse) {
+  button, 
+  [role="button"],
+  input,
+  select,
+  textarea {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    padding: 12px !important;
+  }
+}
+
+/* Indicadores de estado para lectores de pantalla */
+[aria-expanded="true"]::after {
+  content: " (expandido)";
+  position: absolute;
+  left: -10000px;
+}
+
+[aria-expanded="false"]::after {
+  content: " (contraído)";
+  position: absolute;
+  left: -10000px;
+}
+
+[aria-pressed="true"]::after {
+  content: " (presionado)";
+  position: absolute;
+  left: -10000px;
+}
+
+[aria-selected="true"]::after {
+  content: " (seleccionado)";
+  position: absolute;
+  left: -10000px;
+}
+
+/* Mejoras para elementos interactivos */
+.accessibility-enabled button:hover,
+.accessibility-enabled [role="button"]:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+.reduce-motion button:hover,
+.reduce-motion [role="button"]:hover {
+  transform: none !important;
+}
+
+/* Estilos para elementos con estado de carga */
+[aria-busy="true"] {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+[aria-busy="true"]::after {
+  content: " (cargando...)";
+  position: absolute;
+  left: -10000px;
+}
+
+/* Mejoras para formularios accesibles */
+.accessibility-enabled input:invalid {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+}
+
+.accessibility-enabled input:valid {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+/* Anuncios en vivo para lectores de pantalla */
+[aria-live="polite"],
+[aria-live="assertive"] {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Mejoras para tablas accesibles */
+.accessibility-enabled table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.accessibility-enabled th,
+.accessibility-enabled td {
+  border: 1px solid #e5e7eb;
+  padding: 8px;
+  text-align: left;
+}
+
+.accessibility-enabled th {
+  background-color: #f3f4f6;
+  font-weight: bold;
+}
+
+/* Indicadores visuales para estados */
+.accessibility-enabled [aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.accessibility-enabled [aria-hidden="true"] {
+  display: none !important;
+}
+
+/* Mejoras de contraste para enlaces */
+.accessibility-enabled a {
+  text-decoration: underline;
+  color: #1d4ed8;
+}
+
+.accessibility-enabled a:visited {
+  color: #7c3aed;
+}
+
+.accessibility-enabled a:hover,
+.accessibility-enabled a:focus {
+  color: #1e40af;
+  text-decoration: none;
+}
+
+/* Soporte para modo oscuro automático */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --focus-color: #60a5fa;
+    --focus-shadow: 0 0 0 3px rgba(96, 165, 250, 0.5);
+  }
+}
+
+/* Mejoras para dispositivos con pantalla pequeña */
+@media (max-width: 768px) {
+  .accessibility-enabled {
+    font-size: 1.1em;
+    line-height: 1.5;
+  }
+  
+  .accessibility-enabled button,
+  .accessibility-enabled [role="button"] {
+    min-height: 48px;
+    padding: 16px;
+  }
+}
+
+/* Animaciones respetuosas con las preferencias del usuario */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Mejoras para impresión */
+@media print {
+  .accessibility-enabled {
+    font-size: 12pt;
+    line-height: 1.4;
+    color: black !important;
+    background: white !important;
+  }
+  
+  .accessibility-enabled a::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+}

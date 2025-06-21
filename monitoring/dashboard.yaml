@@ -1,0 +1,97 @@
+displayName: "Agora Pro - Dashboard de Monitoreo"
+gridLayout:
+  columns: "2"
+  widgets:
+  - title: "n8n Workers Activos"
+    xyChart:
+      dataSets:
+      - timeSeriesQuery:
+          timeSeriesFilter:
+            filter: 'metric.type="kubernetes.io/container/cpu/core_usage_time" AND resource.labels.container_name="n8n"'
+          unitOverride: "1"
+        plotType: "LINE"
+      timeshiftDuration: "0s"
+      yAxis:
+        label: "CPU Usage"
+        scale: "LINEAR"
+  - title: "Mensajes Pub/Sub Procesados"
+    xyChart:
+      dataSets:
+      - timeSeriesQuery:
+          timeSeriesFilter:
+            filter: 'metric.type="pubsub.googleapis.com/topic/send_message_operation_count"'
+          unitOverride: "1"
+        plotType: "LINE"
+      timeshiftDuration: "0s"
+      yAxis:
+        label: "Messages"
+        scale: "LINEAR"
+  - title: "Redis Conexiones Activas"
+    xyChart:
+      dataSets:
+      - timeSeriesQuery:
+          timeSeriesFilter:
+            filter: 'metric.type="redis.googleapis.com/stats/connected_clients"'
+          unitOverride: "1"
+        plotType: "LINE"
+      timeshiftDuration: "0s"
+      yAxis:
+        label: "Connections"
+        scale: "LINEAR"
+  - title: "Tiempo de Respuesta Promedio"
+    xyChart:
+      dataSets:
+      - timeSeriesQuery:
+          timeSeriesFilter:
+            filter: 'metric.type="kubernetes.io/container/cpu/core_usage_time"'
+          unitOverride: "ms"
+        plotType: "LINE"
+      timeshiftDuration: "0s"
+      yAxis:
+        label: "Response Time"
+        scale: "LINEAR"
+  - title: "Memoria Utilizada por n8n"
+    xyChart:
+      dataSets:
+      - timeSeriesQuery:
+          timeSeriesFilter:
+            filter: 'metric.type="kubernetes.io/container/memory/used_bytes" AND resource.labels.container_name="n8n"'
+          unitOverride: "By"
+        plotType: "LINE"
+      timeshiftDuration: "0s"
+      yAxis:
+        label: "Memory Usage"
+        scale: "LINEAR"
+  - title: "Pods de n8n por Estado"
+    pieChart:
+      dataSets:
+      - timeSeriesQuery:
+          timeSeriesFilter:
+            filter: 'metric.type="kubernetes.io/pod/status/phase" AND resource.labels.container_name="n8n"'
+          unitOverride: "1"
+        plotType: "PIE"
+      chartType: "PIE"
+  - title: "Errores de Webhook"
+    xyChart:
+      dataSets:
+      - timeSeriesQuery:
+          timeSeriesFilter:
+            filter: 'metric.type="kubernetes.io/container/restart_count" AND resource.labels.container_name="n8n"'
+          unitOverride: "1"
+        plotType: "LINE"
+      timeshiftDuration: "0s"
+      yAxis:
+        label: "Errors"
+        scale: "LINEAR"
+  - title: "Throughput de Eventos"
+    xyChart:
+      dataSets:
+      - timeSeriesQuery:
+          timeSeriesFilter:
+            filter: 'metric.type="pubsub.googleapis.com/subscription/num_undelivered_messages"'
+          unitOverride: "1"
+        plotType: "LINE"
+      timeshiftDuration: "0s"
+      yAxis:
+        label: "Events/sec"
+        scale: "LINEAR" 

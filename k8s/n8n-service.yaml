@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n-service
+  namespace: agora-pro
+  labels:
+    app: n8n
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 5678
+    protocol: TCP
+    name: http
+  selector:
+    app: n8n
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n-webhook
+  namespace: agora-pro
+  labels:
+    app: n8n
+    type: webhook
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 5678
+    protocol: TCP
+    name: webhook
+  selector:
+    app: n8n 

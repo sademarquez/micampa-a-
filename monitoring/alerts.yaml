@@ -1,0 +1,77 @@
+displayName: "Agora Pro - Alertas de Monitoreo"
+conditions:
+- displayName: "n8n CPU Alto"
+  conditionThreshold:
+    filter: 'metric.type="kubernetes.io/container/cpu/core_usage_time" AND resource.labels.container_name="n8n"'
+    comparison: COMPARISON_GREATER_THAN
+    thresholdValue: 0.8
+    duration: "300s"
+    trigger:
+      count: 1
+  notificationChannels:
+  - projects/agora-pro-2024/notificationChannels/email-alerts
+---
+displayName: "n8n Memoria Alta"
+conditions:
+- displayName: "Memoria > 80%"
+  conditionThreshold:
+    filter: 'metric.type="kubernetes.io/container/memory/used_bytes" AND resource.labels.container_name="n8n"'
+    comparison: COMPARISON_GREATER_THAN
+    thresholdValue: 8589934592  # 8GB
+    duration: "300s"
+    trigger:
+      count: 1
+  notificationChannels:
+  - projects/agora-pro-2024/notificationChannels/email-alerts
+---
+displayName: "Redis Conexiones Altas"
+conditions:
+- displayName: "Conexiones > 1000"
+  conditionThreshold:
+    filter: 'metric.type="redis.googleapis.com/stats/connected_clients"'
+    comparison: COMPARISON_GREATER_THAN
+    thresholdValue: 1000
+    duration: "300s"
+    trigger:
+      count: 1
+  notificationChannels:
+  - projects/agora-pro-2024/notificationChannels/email-alerts
+---
+displayName: "Pods de n8n Fallidos"
+conditions:
+- displayName: "Pods Fallidos > 0"
+  conditionThreshold:
+    filter: 'metric.type="kubernetes.io/pod/status/phase" AND metric.labels.phase="Failed"'
+    comparison: COMPARISON_GREATER_THAN
+    thresholdValue: 0
+    duration: "60s"
+    trigger:
+      count: 1
+  notificationChannels:
+  - projects/agora-pro-2024/notificationChannels/email-alerts
+---
+displayName: "Mensajes Pub/Sub Sin Entregar"
+conditions:
+- displayName: "Mensajes > 100"
+  conditionThreshold:
+    filter: 'metric.type="pubsub.googleapis.com/subscription/num_undelivered_messages"'
+    comparison: COMPARISON_GREATER_THAN
+    thresholdValue: 100
+    duration: "300s"
+    trigger:
+      count: 1
+  notificationChannels:
+  - projects/agora-pro-2024/notificationChannels/email-alerts
+---
+displayName: "Tiempo de Respuesta Alto"
+conditions:
+- displayName: "Respuesta > 5s"
+  conditionThreshold:
+    filter: 'metric.type="kubernetes.io/container/cpu/core_usage_time"'
+    comparison: COMPARISON_GREATER_THAN
+    thresholdValue: 5000
+    duration: "300s"
+    trigger:
+      count: 1
+  notificationChannels:
+  - projects/agora-pro-2024/notificationChannels/email-alerts 

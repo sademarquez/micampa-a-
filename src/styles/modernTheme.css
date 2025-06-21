@@ -1,0 +1,267 @@
+
+/* SISTEMA ELECTORAL MÓVIL OPTIMIZADO - MI CAMPAÑA 2025 */
+:root {
+  /* Paleta de colores optimizada para móvil */
+  --primary-blue: #1e40af;
+  --primary-blue-light: #3b82f6;
+  --primary-blue-dark: #1e3a8a;
+  --accent-green: #10b981;
+  --accent-gold: #f59e0b;
+  --accent-red: #ef4444;
+  
+  /* Colores base móvil */
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+
+  /* Glassmorphism móvil */
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(59, 130, 246, 0.2);
+  --glass-shadow: 0 8px 32px rgba(30, 64, 175, 0.15);
+  --glass-backdrop: blur(20px);
+
+  /* Gradientes optimizados */
+  --gradient-primary: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-light) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--accent-green) 0%, var(--primary-blue-light) 100%);
+  --gradient-surface: linear-gradient(135deg, var(--slate-50) 0%, var(--slate-100) 100%);
+
+  /* Sombras móviles */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(30, 64, 175, 0.3);
+  
+  /* Bordes animados */
+  --border-gradient: linear-gradient(90deg, var(--primary-blue), var(--primary-blue-light), var(--accent-green));
+}
+
+/* Base móvil optimizada */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
+}
+
+/* Componentes base para móvil */
+.mobile-glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl), var(--shadow-glow);
+}
+
+/* Botones móviles optimizados */
+.mobile-button {
+  background: var(--gradient-primary);
+  border: none;
+  border-radius: 0.875rem;
+  padding: 1rem 1.5rem;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  min-height: 44px; /* iOS touch target */
+  min-width: 44px;
+}
+
+.mobile-button:active {
+  transform: scale(0.98);
+}
+
+.mobile-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.6s;
+}
+
+.mobile-button:hover::before {
+  left: 100%;
+}
+
+/* Animaciones optimizadas para móvil */
+@keyframes mobile-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes mobile-slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes border-pulse {
+  0%, 100% { 
+    background-position: 0% 50%;
+    opacity: 0.8;
+  }
+  50% { 
+    background-position: 100% 50%;
+    opacity: 1;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 5px rgba(30, 64, 175, 0.5);
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(30, 64, 175, 0.8), 0 0 30px rgba(59, 130, 246, 0.4);
+  }
+}
+
+/* Bordes superiores animados */
+.top-border-animated {
+  position: relative;
+  overflow: hidden;
+}
+
+.top-border-animated::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--border-gradient);
+  background-size: 200% 100%;
+  animation: border-pulse 3s ease-in-out infinite;
+  z-index: 10;
+}
+
+.top-border-gradient {
+  position: relative;
+}
+
+.top-border-gradient::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--gradient-primary);
+  animation: glow-pulse 2s ease-in-out infinite;
+  z-index: 10;
+}
+
+/* Utilidades móviles */
+.animate-mobile-fade { animation: mobile-fade-in 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+.animate-mobile-slide { animation: mobile-slide-up 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+
+.text-gradient-primary {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.bg-gradient-mobile { background: var(--gradient-surface); }
+
+/* Responsive móvil perfeccionado */
+@media (max-width: 768px) {
+  .mobile-glass-card {
+    border-radius: 1rem;
+    margin: 0.75rem;
+    padding: 1.25rem;
+  }
+  
+  .mobile-button {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.95rem;
+    border-radius: 0.75rem;
+  }
+  
+  /* Optimizaciones para pantallas pequeñas */
+  .top-border-animated::before {
+    height: 3px;
+  }
+  
+  .top-border-gradient::before {
+    height: 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-glass-card {
+    margin: 0.5rem;
+    padding: 1rem;
+    border-radius: 0.875rem;
+  }
+  
+  .mobile-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Mejoras de accesibilidad móvil */
+@media (prefers-reduced-motion: reduce) {
+  .top-border-animated::before,
+  .top-border-gradient::before,
+  .mobile-button::before {
+    animation: none;
+  }
+  
+  .mobile-glass-card {
+    transition: none;
+  }
+}
+
+/* Soporte para modo oscuro */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --glass-bg: rgba(30, 41, 59, 0.95);
+    --glass-border: rgba(59, 130, 246, 0.3);
+    --slate-50: #0f172a;
+    --slate-100: #1e293b;
+  }
+}
+
+/* Optimizaciones de rendimiento */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.hardware-accelerated {
+  backface-visibility: hidden;
+  perspective: 1000px;
+}

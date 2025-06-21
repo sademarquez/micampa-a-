@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agora-pro
+  labels:
+    name: agora-pro
+    app: agora-pro
+    environment: production 

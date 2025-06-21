@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n-orchestrator
+  namespace: agora-pro
+  labels:
+    app: n8n
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: n8n
+  template:
+    metadata:
+      labels:
+        app: n8n
+    spec:
+      containers:
+      - name: n8n
+        image: n8nio/n8n:latest
+        ports:
+        - containerPort: 5678
+        env:
+        - name: N8N_BASIC_AUTH_ACTIVE
+          value: "true"
+        - name: N8N_BASIC_AUTH_USER
+          value: "admin"
+        - name: N8N_BASIC_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: password
+        - name: N8N_HOST
+          value: "0.0.0.0"
+        - name: N8N_PORT
+          value: "5678"
+        - name: N8N_PROTOCOL
+          value: "https"
+        - name: N8N_USER_MANAGEMENT_DISABLED
+          value: "false"
+        - name: N8N_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: encryption-key
+        - name: N8N_DATABASE_TYPE
+          value: "postgresdb"
+        - name: N8N_DATABASE_POSTGRESDB_HOST
+          value: "agora-postgres"
+        - name: N8N_DATABASE_POSTGRESDB_PORT
+          value: "5432"
+        - name: N8N_DATABASE_POSTGRESDB_DATABASE
+          value: "n8n"
+        - name: N8N_DATABASE_POSTGRESDB_USER
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: db-user
+        - name: N8N_DATABASE_POSTGRESDB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: db-password
+        - name: N8N_REDIS_HOST
+          value: "agora-redis"
+        - name: N8N_REDIS_PORT
+          value: "6379"
+        - name: N8N_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: redis-password
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 5678
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 5678
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      imagePullSecrets:
+      - name: n8n-registry-secret 
