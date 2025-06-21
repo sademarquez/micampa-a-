@@ -1,4 +1,3 @@
-
 import {
   BrowserRouter,
   Routes,
@@ -25,6 +24,8 @@ import { SecureAuthProvider } from "./contexts/SecureAuthContext";
 import ModernMobileNavigation from './components/ModernMobileNavigation';
 import ProtectedRoute from './components/ProtectedRoute';
 import N8NComponentsManager from './components/N8NComponentsManager';
+import Estructura from "./pages/Estructura";
+import DeveloperPage from "./pages/Developer";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -88,6 +89,8 @@ function App() {
                   <Liderazgo />
                 </ProtectedRoute>
               } />
+              <Route path="/estructura" element={<Estructura />} />
+              <Route path="/developer" element={<DeveloperPage />} />
               <Route path="/red-ayudantes" element={
                 <ProtectedRoute>
                   <RedAyudantes />

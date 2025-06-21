@@ -1,4 +1,3 @@
-
 export interface N8NConfig {
   baseUrl: string;
   webhookPrefix: string;
@@ -28,11 +27,11 @@ export interface N8NResponse {
 
 // Configuración de N8N para producción
 export const defaultN8NConfig: N8NConfig = {
-  baseUrl: 'https://n8n.sistema-electoral.com',
+  baseUrl: import.meta.env.DEV ? 'http://localhost:5678' : 'https://n8n.sistema-electoral.com',
   webhookPrefix: '/webhook',
   timeout: 30000,
   retryAttempts: 3,
-  productionMode: true
+  productionMode: !import.meta.env.DEV
 };
 
 // Mapeo de componentes a webhooks N8N

@@ -1,7 +1,3 @@
-
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 
-  (typeof window !== 'undefined' && (window as any).GEMINI_API_KEY);
-
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent';
 
 interface GeminiRequest {
@@ -38,16 +34,16 @@ interface CandidateInfo {
 
 export class GeminiElectoralService {
   private apiKey: string;
-  private isConfigured: boolean;
+  public isConfigured: boolean;
 
-  constructor() {
-    this.apiKey = GEMINI_API_KEY || '';
-    this.isConfigured = !!this.apiKey;
-    
-    if (this.isConfigured) {
-      console.log('✅ Gemini API configurada correctamente');
+  constructor(apiKey?: string) {
+    const key = apiKey || (typeof window !== 'undefined' ? localStorage.getItem('geminiApiKey') : undefined);
+    if (key) {
+      this.apiKey = key;
+      this.isConfigured = true;
     } else {
-      console.warn('⚠️ Gemini API key not found. Verifica la configuración.');
+      this.apiKey = '';
+      this.isConfigured = false;
     }
   }
 
