@@ -11,79 +11,74 @@ import Estructura from "./pages/Estructura";
 import DeveloperPage from "./pages/Developer";
 import SystemTesting from "./pages/SystemTesting";
 import { ModernNavigation } from "./components/ModernNavigation";
+import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
+import PageLayout from './components/PageLayout';
+import SecureLogin from './pages/SecureLogin';
+import RegistroPersonalizado from './pages/RegistroPersonalizado';
 
 function App() {
   return (
-    <ModernErrorBoundary>
-      <SecureAuthProvider>
-        <Router>
-          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-            <Routes>
-              {/* Rutas públicas */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/registro" element={<Registro />} />
-              
-              {/* Rutas protegidas con navegación moderna */}
-              <Route path="/" element={
+    <Router>
+      <AuthProvider>
+        <ThemeProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/secure-login" element={<SecureLogin />} />
+            <Route path="/registro" element={<Registro />} />
+            <Route path="/registro-personalizado" element={<RegistroPersonalizado />} />
+            
+            {/* Rutas Protegidas */}
+            <Route
+              path="/*"
+              element={
                 <ProtectedRoute>
-                  <div className="flex h-screen">
-                    <ModernNavigation />
-                    <main className="flex-1 overflow-auto">
-                  <Dashboard />
-                    </main>
-                  </div>
+                  <PageLayout>
+                    <Routes>
+                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/liderazgo" element={
+                        <div className="flex h-screen">
+                          <ModernNavigation />
+                          <main className="flex-1 overflow-auto">
+                            <Liderazgo />
+                          </main>
+                        </div>
+                      } />
+                      <Route path="/estructura" element={
+                        <div className="flex h-screen">
+                          <ModernNavigation />
+                          <main className="flex-1 overflow-auto">
+                            <Estructura />
+                          </main>
+                        </div>
+                      } />
+                      <Route path="/developer" element={
+                        <div className="flex h-screen">
+                          <ModernNavigation />
+                          <main className="flex-1 overflow-auto">
+                            <DeveloperPage />
+                          </main>
+                        </div>
+                      } />
+                      <Route path="/system-testing" element={
+                        <div className="flex h-screen">
+                          <ModernNavigation />
+                          <main className="flex-1 overflow-auto">
+                            <SystemTesting />
+                          </main>
+                        </div>
+                      } />
+                    </Routes>
+                  </PageLayout>
                 </ProtectedRoute>
-              } />
-              
-              <Route path="/liderazgo" element={
-                <ProtectedRoute>
-                  <div className="flex h-screen">
-                    <ModernNavigation />
-                    <main className="flex-1 overflow-auto">
-                  <Liderazgo />
-                    </main>
-                  </div>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/estructura" element={
-                <ProtectedRoute>
-                  <div className="flex h-screen">
-                    <ModernNavigation />
-                    <main className="flex-1 overflow-auto">
-                      <Estructura />
-                    </main>
-                  </div>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/developer" element={
-                <ProtectedRoute>
-                  <div className="flex h-screen">
-                    <ModernNavigation />
-                    <main className="flex-1 overflow-auto">
-                      <DeveloperPage />
-                    </main>
-                  </div>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/system-testing" element={
-                <ProtectedRoute>
-                  <div className="flex h-screen">
-                    <ModernNavigation />
-                    <main className="flex-1 overflow-auto">
-                      <SystemTesting />
-                    </main>
-                  </div>
-                </ProtectedRoute>
-              } />
-            </Routes>
-            <Toaster />
-          </div>
-        </Router>
-      </SecureAuthProvider>
-    </ModernErrorBoundary>
+              }
+            />
+          </Routes>
+          <Toaster />
+        </ThemeProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 

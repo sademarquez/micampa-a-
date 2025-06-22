@@ -8,7 +8,7 @@ export interface DeveloperUser {
   id: string;
   email: string;
   name: string;
-  role: 'developer' | 'admin' | 'master';
+  role: 'developer' | 'admin' | 'master' | 'candidato' | 'lider';
   created_at: string;
   last_login?: string;
 }
@@ -274,6 +274,45 @@ class DeveloperAuthService {
     }
   }
 
+  // Actualizar API key para un master específico
+  async updateMasterApiKey(masterId: string, apiKey: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('master_databases')
+        .update({ api_key_primary: apiKey, updated_at: new Date().toISOString() })
+        .eq('master_id', masterId);
+
+      if (error) {
+        // Si no existe una fila para el master, se puede crear una nueva
+        if (error.code === 'PGRST204') {
+          const { error: insertError } = await supabase
+            .from('master_databases')
+            .insert({
+              master_id: masterId,
+              api_key_primary: apiKey,
+              // Aquí puedes añadir valores por defecto para otros campos si es necesario
+              campaign_name: `Campaña de ${masterId}`, 
+              database_url: '',
+              google_account: ''
+            });
+          
+          if (insertError) throw insertError;
+        } else {
+          throw error;
+        }
+      }
+      
+      await this.logSystemEvent(
+        'master_api_key_updated',
+        'security',
+        `API key actualizada para master: ${masterId}`
+      );
+    } catch (error) {
+      console.error('Error updating master API key:', error);
+      throw error;
+    }
+  }
+
   // Inicializar automáticamente el usuario desarrollador
   async initializeDeveloperUser(): Promise<DeveloperUser> {
     const email = 'daniel@dev.com';
@@ -293,6 +332,136 @@ class DeveloperAuthService {
       }
     } catch (error) {
       console.error('Error initializing developer user:', error);
+      throw error;
+    }
+  }
+
+  // Crear un nuevo usuario con el rol de master
+  async createMasterUser(email: string, password: string): Promise<{ id: string }> {
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            role: 'master',
+          }
+        }
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("No se pudo crear el usuario master en Supabase Auth.");
+
+      // Crear el perfil correspondiente en la tabla 'profiles'
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          name: email.split('@')[0], // Un nombre por defecto
+          role: 'master',
+          email: email,
+        });
+
+      if (profileError) {
+        // Si falla la creación del perfil, se debería borrar el usuario de auth para consistencia.
+        // Esta es una operación de admin, requiere cuidado.
+        console.error("Error creando el perfil, el usuario de auth podría quedar huérfano:", profileError);
+        throw profileError;
+      }
+
+      await this.logSystemEvent(
+        'master_user_created',
+        'user_management',
+        `Nuevo usuario master creado: ${email}`
+      );
+      
+      return { id: authData.user.id };
+    } catch (error) {
+      console.error('Error creating master user:', error);
+      throw error;
+    }
+  }
+
+  // Crear un nuevo usuario con el rol de candidato, por un Master
+  async createCandidateUser(email: string, password: string, name: string, createdByMasterId: string): Promise<{ id: string }> {
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            role: 'candidato',
+            name: name,
+          }
+        }
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("No se pudo crear el usuario candidato en Supabase Auth.");
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          name: name,
+          role: 'candidato',
+          email: email,
+          created_by: createdByMasterId
+        });
+      
+      if (profileError) throw profileError;
+
+      await this.logSystemEvent(
+        'candidate_user_created',
+        'user_management',
+        `Nuevo candidato creado por ${createdByMasterId}: ${email}`
+      );
+      
+      return { id: authData.user.id };
+    } catch (error) {
+      console.error('Error creating candidate user:', error);
+      throw error;
+    }
+  }
+
+  // Crear un nuevo usuario con el rol de lider, por un Candidato
+  async createLeaderUser(email: string, password: string, name: string, createdByCandidateId: string): Promise<{ id: string }> {
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            role: 'lider',
+            name: name,
+          }
+        }
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("No se pudo crear el usuario líder en Supabase Auth.");
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          name: name,
+          role: 'lider',
+          email: email,
+          created_by: createdByCandidateId
+        });
+      
+      if (profileError) throw profileError;
+
+      await this.logSystemEvent(
+        'leader_user_created',
+        'user_management',
+        `Nuevo líder creado por ${createdByCandidateId}: ${email}`
+      );
+      
+      return { id: authData.user.id };
+    } catch (error) {
+      console.error('Error creating leader user:', error);
       throw error;
     }
   }

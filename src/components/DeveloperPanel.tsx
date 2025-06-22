@@ -21,15 +21,21 @@ import {
 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext";
+import { DeveloperAuthService } from "@/services/developerAuthService";
 
 export function DeveloperPanel() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [geminiProApiKey, setGeminiProApiKey] = useState('');
+  const [masterApiKey, setMasterApiKey] = useState('');
   const [showGeminiKey, setShowGeminiKey] = useState(false);
   const [showGeminiProKey, setShowGeminiProKey] = useState(false);
+  const [showMasterKey, setShowMasterKey] = useState(false);
   const [isTestingGemini, setIsTestingGemini] = useState(false);
   const [isTestingGeminiPro, setIsTestingGeminiPro] = useState(false);
+  const [isSavingMasterKey, setIsSavingMasterKey] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<{
     gemini: 'idle' | 'testing' | 'success' | 'error' | 'quota';
     geminiPro: 'idle' | 'testing' | 'success' | 'error' | 'quota';
@@ -37,6 +43,7 @@ export function DeveloperPanel() {
     gemini: 'idle',
     geminiPro: 'idle'
   });
+  const developerAuthService = new DeveloperAuthService();
 
   // Cargar claves guardadas al montar el componente
   useEffect(() => {
@@ -45,7 +52,22 @@ export function DeveloperPanel() {
     
     if (savedGeminiKey) setGeminiApiKey(savedGeminiKey);
     if (savedGeminiProKey) setGeminiProApiKey(savedGeminiProKey);
-  }, []);
+
+    const fetchMasterKey = async () => {
+      if (user && user.role === 'master') {
+        try {
+          const key = await developerAuthService.getMasterApiKey(user.id);
+          if (key) {
+            setMasterApiKey(key);
+          }
+        } catch (error) {
+          console.error("Error fetching master API key:", error);
+        }
+      }
+    };
+
+    fetchMasterKey();
+  }, [user]);
 
   const saveApiKey = (key: string, type: 'gemini' | 'geminiPro') => {
     const storageKey = type === 'gemini' ? 'geminiApiKey' : 'geminiProApiKey';
@@ -56,6 +78,35 @@ export function DeveloperPanel() {
       description: `La clave de ${type === 'gemini' ? 'Gemini' : 'Gemini Pro'} ha sido guardada exitosamente.`,
       duration: 3000,
     });
+  };
+
+  const handleSaveMasterApiKey = async () => {
+    if (!user || user.role !== 'master') return;
+    if (!masterApiKey.trim()) {
+      toast({
+        title: "❌ Error",
+        description: "Por favor, ingresa una clave de API.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSavingMasterKey(true);
+    try {
+      await developerAuthService.updateMasterApiKey(user.id, masterApiKey);
+      toast({
+        title: "✅ Clave Master Guardada",
+        description: "Tu clave de API personalizada ha sido guardada de forma segura.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "❌ Error al guardar",
+        description: error.message || "No se pudo guardar la clave de API.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingMasterKey(false);
+    }
   };
 
   const handleTestGeminiConnection = async () => {
@@ -191,6 +242,78 @@ export function DeveloperPanel() {
           <p className="text-gray-600">Configura tus claves de API para habilitar las funcionalidades de IA</p>
         </div>
       </div>
+
+      {user && user.role === 'master' && (
+        <>
+          <Card className="border-purple-600">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Database className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span>Personalización Google (Master)</span>
+                  </div>
+                  <p className="text-sm text-gray-600 font-normal mt-1">
+                    Usa tu propia API Key de Google para analíticas avanzadas.
+                  </p>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="master-api-key" className="flex items-center gap-2">
+                  <KeyRound className="w-4 h-4" />
+                  API Key Personalizada (Master)
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="master-api-key"
+                    type={showMasterKey ? "text" : "password"}
+                    value={masterApiKey}
+                    onChange={(e) => setMasterApiKey(e.target.value)}
+                    placeholder="Ingresa tu clave de API de Google"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowMasterKey(!showMasterKey)}
+                  >
+                    {showMasterKey ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleSaveMasterApiKey}
+                disabled={isSavingMasterKey || !masterApiKey.trim()}
+                className="w-full"
+              >
+                {isSavingMasterKey ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <Shield className="w-4 h-4 mr-2" />
+                    Guardar Clave Personalizada
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+          <Separator />
+        </>
+      )}
 
       {/* Gemini Standard */}
       <Card className="border-l-4 border-l-blue-500">

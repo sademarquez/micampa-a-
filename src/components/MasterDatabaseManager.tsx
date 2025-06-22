@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { developerAuthService, MasterDatabase } from '@/services/developerAuthService';
+import { developerAuthService } from '@/services/developerAuthService';
 import { 
   Database, 
   Plus, 
@@ -17,27 +17,61 @@ import {
   ExternalLink,
   Upload,
   Mail,
-  Key
+  Key,
+  UserPlus,
+  Loader2,
+  Save,
+  Globe,
+  Shield
 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useTheme } from '@/contexts/ThemeContext';
+import { cn } from '@/lib/utils';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Separator } from "@/components/ui/separator";
 
 interface MasterDatabaseManagerProps {
   className?: string;
 }
+
+const masterDbSchema = z.object({
+  campaign_name: z.string().min(3, "El nombre de la campaña es requerido"),
+  database_url: z.string().url("Debe ser una URL válida de Supabase"),
+  google_account: z.string().email("Debe ser un email válido de Google"),
+  api_key_primary: z.string().optional(),
+  master_user_email: z.string().email("El email para el usuario Master es requerido"),
+  master_user_password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
+});
+
+type MasterDbFormValues = z.infer<typeof masterDbSchema>;
 
 export const MasterDatabaseManager: React.FC<MasterDatabaseManagerProps> = ({ className }) => {
   const [masterDatabases, setMasterDatabases] = useState<MasterDatabase[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
+  const { theme } = useTheme();
+  const developerTheme = roleThemes['desarrollador'];
 
-  // Form state
-  const [formData, setFormData] = useState({
-    master_id: '',
-    campaign_name: '',
-    google_account: '',
-    api_key_primary: '',
-    database_url: '',
-    database_type: 'supabase' as const
+  const form = useForm<MasterDbFormValues>({
+    resolver: zodResolver(masterDbSchema),
+    defaultValues: {
+      campaign_name: "",
+      database_url: "",
+      google_account: "",
+      api_key_primary: "",
+      master_user_email: "",
+      master_user_password: "",
+    },
   });
 
   // Cargar bases de datos de masters
@@ -58,121 +92,30 @@ export const MasterDatabaseManager: React.FC<MasterDatabaseManagerProps> = ({ cl
     }
   };
 
-  // Registrar nueva base de datos master
-  const registerMasterDatabase = async () => {
+  const onSubmit = async (values: MasterDbFormValues) => {
+    setLoading(true);
     try {
-      setLoading(true);
+      const masterUser = await developerAuthService.createMasterUser(values.master_user_email, values.master_user_password);
       
-      if (!formData.master_id || !formData.campaign_name || !formData.google_account || !formData.database_url) {
-        toast({
-          title: "⚠️ Campos requeridos",
-          description: "ID del Master, Nombre de Campaña, Cuenta de Google y URL de Base de Datos son obligatorios",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const newDatabase = await developerAuthService.registerMasterDatabase({
-        master_id: formData.master_id,
-        campaign_name: formData.campaign_name,
-        google_account: formData.google_account,
-        api_key_primary: formData.api_key_primary,
-        database_url: formData.database_url,
-        database_type: formData.database_type,
-        connection_status: 'disconnected',
-        compressed_data: {}
-      });
-
-      setMasterDatabases(prev => [newDatabase, ...prev]);
-      setShowForm(false);
-      setFormData({ 
-        master_id: '', 
-        campaign_name: '', 
-        google_account: '', 
-        api_key_primary: '', 
-        database_url: '', 
-        database_type: 'supabase' 
+      await developerAuthService.registerMasterDatabase({
+        master_id: masterUser.id,
+        campaign_name: values.campaign_name,
+        database_url: values.database_url,
+        google_account: values.google_account,
+        api_key_primary: values.api_key_primary,
+        compressed_data: {},
       });
 
       toast({
-        title: "✅ Base de datos registrada",
-        description: `${formData.campaign_name} ha sido registrada exitosamente`,
+        title: "✅ Master Creado y Registrado",
+        description: `El usuario ${values.master_user_email} ha sido creado y su base de datos registrada.`,
       });
-    } catch (error) {
-      console.error('Error registering master database:', error);
+      form.reset();
+    } catch (error: any) {
       toast({
         title: "❌ Error",
-        description: "No se pudo registrar la base de datos",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Probar conexión a base de datos master
-  const testConnection = async (masterId: string) => {
-    try {
-      setLoading(true);
-      
-      // Simular prueba de conexión
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Actualizar estado de conexión
-      const updatedDatabases = masterDatabases.map(db => 
-        db.master_id === masterId 
-          ? { ...db, connection_status: 'connected' as const }
-          : db
-      );
-      
-      setMasterDatabases(updatedDatabases);
-      
-      toast({
-        title: "✅ Conexión exitosa",
-        description: "La base de datos está conectada",
-      });
-    } catch (error) {
-      console.error('Error testing connection:', error);
-      toast({
-        title: "❌ Error de conexión",
-        description: "No se pudo conectar a la base de datos",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Sincronizar datos comprimidos
-  const syncCompressedData = async (masterId: string) => {
-    try {
-      setLoading(true);
-      
-      // Simular sincronización de datos
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const compressedData = {
-        total_voters: Math.floor(Math.random() * 50000) + 10000,
-        active_territories: Math.floor(Math.random() * 100) + 20,
-        last_update: new Date().toISOString(),
-        sync_status: 'completed'
-      };
-
-      await developerAuthService.updateCompressedData(masterId, compressedData);
-      
-      // Actualizar lista
-      await loadMasterDatabases();
-      
-      toast({
-        title: "🔄 Datos sincronizados",
-        description: "Los datos comprimidos han sido actualizados",
-      });
-    } catch (error) {
-      console.error('Error syncing compressed data:', error);
-      toast({
-        title: "❌ Error de sincronización",
-        description: "No se pudieron sincronizar los datos",
-        variant: "destructive"
+        description: error.message || "No se pudo completar la operación.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -225,121 +168,133 @@ export const MasterDatabaseManager: React.FC<MasterDatabaseManagerProps> = ({ cl
           onClick={() => setShowForm(!showForm)}
           className="flex items-center gap-2"
         >
-          <Plus className="h-4 w-4" />
-          Registrar Master
+          <UserPlus className="h-4 w-4" />
+          Crear Nuevo Master
         </Button>
       </div>
 
       {/* Formulario de registro */}
       {showForm && (
-        <Card>
+        <Card className={cn("border-2", developerTheme.borderColor, `bg-gradient-to-br from-gray-900 to-gray-800`)}>
           <CardHeader>
-            <CardTitle>Registrar Nueva Base de Datos Master</CardTitle>
-            <CardDescription>
-              Conecta una nueva base de datos de master para sincronización y optimización con IA
-            </CardDescription>
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-indigo-900/50">
+                <UserPlus className="w-6 h-6 text-indigo-400" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl text-white">Crear Nuevo Master</CardTitle>
+                <CardDescription className="text-indigo-200">
+                  Registra un nuevo usuario Master y su base de datos de campaña asociada.
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="master_id">ID del Master</Label>
-                <Input
-                  id="master_id"
-                  placeholder="master_001"
-                  value={formData.master_id}
-                  onChange={(e) => setFormData(prev => ({ ...prev, master_id: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="campaign_name">Nombre de la Campaña</Label>
-                <Input
-                  id="campaign_name"
-                  placeholder="Campaña Norte 2025"
-                  value={formData.campaign_name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, campaign_name: e.target.value }))}
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="google_account" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Cuenta de Google
-                </Label>
-                <Input
-                  id="google_account"
-                  type="email"
-                  placeholder="campaign@gmail.com"
-                  value={formData.google_account}
-                  onChange={(e) => setFormData(prev => ({ ...prev, google_account: e.target.value }))}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Para optimización de funciones de Agora
-                </p>
-              </div>
-              <div>
-                <Label htmlFor="api_key_primary" className="flex items-center gap-2">
-                  <Key className="h-4 w-4" />
-                  API Key Principal
-                </Label>
-                <Input
-                  id="api_key_primary"
-                  type="password"
-                  placeholder="AIzaSyBxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                  value={formData.api_key_primary}
-                  onChange={(e) => setFormData(prev => ({ ...prev, api_key_primary: e.target.value }))}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Opcional: se usará la genérica de Google si no se suministra
-                </p>
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="database_url">URL de la Base de Datos</Label>
-              <Input
-                id="database_url"
-                placeholder="https://tu-proyecto.supabase.co"
-                value={formData.database_url}
-                onChange={(e) => setFormData(prev => ({ ...prev, database_url: e.target.value }))}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="database_type">Tipo de Base de Datos</Label>
-              <Select 
-                value={formData.database_type} 
-                onValueChange={(value: any) => setFormData(prev => ({ ...prev, database_type: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="supabase">Supabase</SelectItem>
-                  <SelectItem value="postgresql">PostgreSQL</SelectItem>
-                  <SelectItem value="mysql">MySQL</SelectItem>
-                  <SelectItem value="mongodb">MongoDB</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button 
-                onClick={registerMasterDatabase}
-                disabled={loading}
-                className="flex-1"
-              >
-                {loading ? 'Registrando...' : 'Registrar Base de Datos'}
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setShowForm(false)}
-                disabled={loading}
-              >
-                Cancelar
-              </Button>
-            </div>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="master_user_email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-indigo-200 flex items-center gap-2"><Mail className="w-4 h-4" /> Email del Usuario Master</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="master@ejemplo.com" {...field} className="bg-gray-800 border-indigo-700 text-white placeholder:text-gray-500" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="master_user_password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-indigo-200 flex items-center gap-2"><Key className="w-4 h-4" /> Contraseña del Usuario Master</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="********" {...field} className="bg-gray-800 border-indigo-700 text-white placeholder:text-gray-500" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <Separator className="bg-indigo-800" />
+                
+                <h3 className="text-lg font-semibold text-indigo-200 flex items-center gap-3"><Database className="w-5 h-5"/> Datos de la Campaña</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="campaign_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-indigo-200">Nombre de la Campaña</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Campaña Presidencial 2026" {...field} className="bg-gray-800 border-indigo-700 text-white placeholder:text-gray-500" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="database_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-indigo-200 flex items-center gap-2"><Globe className="w-4 h-4" /> URL de Supabase</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://<id>.supabase.co" {...field} className="bg-gray-800 border-indigo-700 text-white placeholder:text-gray-500" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="google_account"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-indigo-200">Cuenta de Google Asociada</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="campaña@gmail.com" {...field} className="bg-gray-800 border-indigo-700 text-white placeholder:text-gray-500" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="api_key_primary"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-indigo-200 flex items-center gap-2"><Shield className="w-4 h-4" /> API Key de Google (Opcional)</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="AIzaSy..." {...field} className="bg-gray-800 border-indigo-700 text-white placeholder:text-gray-500" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <Button type="submit" className={cn("w-full text-lg py-6", developerTheme.buttonClass, "hover:shadow-indigo-500/40 shadow-lg")} disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Creando y Registrando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-5 w-5" />
+                      Crear Master y Guardar Configuración
+                    </>
+                  )}
+                </Button>
+              </form>
+            </Form>
           </CardContent>
         </Card>
       )}

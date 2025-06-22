@@ -1,29 +1,99 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Users, MapPin, User, BarChart3, Network, LogOut, FileText, Shield, Zap } from "lucide-react";
+import { Menu, Users, MapPin, User, BarChart3, Network, LogOut, FileText, Shield, Zap, Code, Beaker } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useSecureAuth } from "../contexts/SecureAuthContext";
+import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import { cn } from '@/lib/utils';
 import ModernMobileNavigation from "./ModernMobileNavigation";
 
-const Navigation = () => {
-  const [isOpen, setIsOpen] = useState(false);
+interface NavigationProps {
+  isSidebarOpen: boolean;
+  setSidebarOpen: (isOpen: boolean) => void;
+}
+
+const Navigation: React.FC<NavigationProps> = ({ isSidebarOpen, setSidebarOpen }) => {
+  const { user } = useAuth();
+  const { theme } = useTheme();
   const location = useLocation();
-  const { user, logout } = useSecureAuth();
   const navigate = useNavigate();
 
-  const navigationItems = [
-    { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
-    { href: "/dashboard?tab=electoral", label: "IA Electoral", icon: Zap },
-    { href: "/dashboard?tab=visitor", label: "Visitantes", icon: Users },
-    { href: "/registro", label: "Registro", icon: User },
-    { href: "/mapa-alertas", label: "Mapa", icon: MapPin },
-    { href: "/informes", label: "Informes", icon: FileText },
-    { href: "/liderazgo", label: "Liderazgo", icon: Users },
-    { href: "/red-ayudantes", label: "Red Ayudantes", icon: Network },
-    { href: "/configuracion", label: "Configuración", icon: Shield }
+  const navLinks: NavLink[] = [
+    {
+      path: '/dashboard',
+      icon: <BarChart3 size={20} />,
+      label: 'Dashboard',
+    },
+    {
+      path: '/dashboard?tab=electoral',
+      icon: <Zap size={20} />,
+      label: 'IA Electoral',
+    },
+    {
+      path: '/dashboard?tab=visitor',
+      icon: <Users size={20} />,
+      label: 'Visitantes',
+    },
+    {
+      path: '/registro',
+      icon: <User size={20} />,
+      label: 'Registro',
+    },
+    {
+      path: '/mapa-alertas',
+      icon: <MapPin size={20} />,
+      label: 'Mapa',
+    },
+    {
+      path: '/informes',
+      icon: <FileText size={20} />,
+      label: 'Informes',
+    },
+    {
+      path: '/liderazgo',
+      icon: <Users size={20} />,
+      label: 'Liderazgo',
+    },
+    {
+      path: '/red-ayudantes',
+      icon: <Network size={20} />,
+      label: 'Red Ayudantes',
+    },
+    {
+      path: '/configuracion',
+      icon: <Shield size={20} />,
+      label: 'Configuración',
+    },
+    {
+      path: '/developer',
+      icon: <Code size={20} />,
+      label: 'Developer',
+      roles: ['desarrollador'],
+    },
+    {
+      path: '/system-testing',
+      icon: <Beaker size={20} />,
+      label: 'System Testing',
+      roles: ['desarrollador'],
+    },
   ];
+
+  const filteredLinks = navLinks.filter(
+    (link) => !link.roles || (user && user.role && link.roles.includes(user.role))
+  );
+
+  const sidebarClasses = cn(
+    'fixed inset-y-0 left-0 z-30 w-64 px-4 py-8 transform transition-transform duration-300 ease-in-out',
+    theme.backgroundColor, // Usa el color de fondo del tema
+    'border-r',
+    theme.borderColor, // Usa el color de borde del tema
+    {
+      'translate-x-0': isSidebarOpen,
+      '-translate-x-full': !isSidebarOpen,
+    },
+    'lg:relative lg:translate-x-0' // Siempre visible en pantallas grandes
+  );
 
   const isActiveRoute = (href: string) => {
     if (href.includes('?tab=')) {
@@ -47,110 +117,49 @@ const Navigation = () => {
 
   return (
     <>
-      {/* Navegación móvil moderna */}
-      <ModernMobileNavigation />
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black opacity-50 z-20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+      <aside className={sidebarClasses}>
+        <a href="#" className="flex items-center px-4">
+          <svg
+            className="w-8 h-8 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M4 6h16M4 12h16M4 18h16"
+            ></path>
+          </svg>
+          <span className={`text-2xl font-bold ${theme.textColor}`}>Agora</span>
+        </a>
 
-      {/* Navegación desktop moderna */}
-      <nav className="hidden md:block header-modern border-b border-gray-200 shadow-modern-sm">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo moderno */}
-            <Link to="/dashboard" className="flex items-center space-x-3">
-              <div className="w-10 h-10 gradient-bg-primary rounded-xl flex items-center justify-center shadow-modern-md">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <span className="font-bold text-xl gradient-text-primary">
-                  MI CAMPAÑA 2025
-                </span>
-                <div className="text-xs text-gray-500">Automatización Electoral IA</div>
-              </div>
-            </Link>
-
-            {/* Desktop Navigation moderna */}
-            <div className="hidden lg:flex items-center space-x-2">
-              {navigationItems.slice(0, 6).map((item) => {
-                const active = isActiveRoute(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 font-medium ${
-                      active
-                        ? 'gradient-bg-primary text-white shadow-modern-md'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                  >
-                    <item.icon className="w-4 h-4" />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-              
-              <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-200">
-                <div className="text-sm">
-                  <p className="font-medium text-gray-800">{user.name}</p>
-                  <p className="text-xs text-gray-500 capitalize">({user.role})</p>
-                </div>
-                <Button 
-                  onClick={handleLogout}
-                  variant="outline" 
-                  size="sm"
-                  className="border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Salir
-                </Button>
-              </div>
-            </div>
-
-            {/* Mobile menu trigger - solo para tablets */}
-            <div className="lg:hidden">
-              <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-50">
-                    <Menu className="w-6 h-6" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-[300px] bg-white border-l border-gray-200">
-                  <div className="flex flex-col space-y-4 mt-8">
-                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                      <p className="font-medium text-gray-800">{user.name}</p>
-                      <p className="text-sm text-gray-500 capitalize">Rol: {user.role}</p>
-                    </div>
-                    {navigationItems.map((item) => {
-                      const active = isActiveRoute(item.href);
-                      return (
-                        <Link
-                          key={item.href}
-                          to={item.href}
-                          onClick={() => setIsOpen(false)}
-                          className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 ${
-                            active
-                              ? 'gradient-bg-primary text-white shadow-modern-md'
-                              : 'text-gray-700 hover:bg-gray-50'
-                          }`}
-                        >
-                          <item.icon className="w-5 h-5" />
-                          <span className="font-medium">{item.label}</span>
-                        </Link>
-                      );
-                    })}
-                    <Button 
-                      onClick={handleLogout}
-                      className="bg-red-50 hover:bg-red-100 text-red-600 shadow-modern-sm mt-6"
-                      variant="ghost"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Cerrar Sesión
-                    </Button>
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
-          </div>
-        </div>
-      </nav>
+        <nav className="mt-8">
+          {filteredLinks.map((link, index) => (
+            <a
+              key={index}
+              href={link.path}
+              className={cn(
+                'flex items-center mt-4 py-2 px-6 rounded-md transition-colors duration-200',
+                isActiveRoute(link.path)
+                  ? `${theme.buttonClass} shadow-lg` // Estilo activo del tema
+                  : `${theme.textColor} hover:bg-gray-200/50 dark:hover:bg-gray-700/50`
+              )}
+            >
+              {link.icon}
+              <span className="mx-3">{link.label}</span>
+            </a>
+          ))}
+        </nav>
+      </aside>
     </>
   );
 };
