@@ -1,0 +1,29 @@
+# Backend Dockerfile para Agora (n8n + Redis + PostgreSQL)
+FROM n8nio/n8n:latest
+
+# Variables de entorno
+ENV N8N_BASIC_AUTH_ACTIVE=true
+ENV N8N_BASIC_AUTH_USER=admin
+ENV N8N_BASIC_AUTH_PASSWORD=agora2024
+ENV N8N_HOST=0.0.0.0
+ENV N8N_PORT=5678
+ENV N8N_PROTOCOL=https
+ENV N8N_USER_MANAGEMENT_DISABLED=false
+ENV N8N_DIAGNOSTICS_ENABLED=false
+
+# Instalar dependencias adicionales
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    redis-tools \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar configuración personalizada
+COPY docker-compose.yml /tmp/
+COPY supabase/ /tmp/supabase/
+
+# Exponer puerto
+EXPOSE 5678
+
+# Comando de inicio
+CMD ["n8n"] 

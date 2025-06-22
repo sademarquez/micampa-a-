@@ -1,0 +1,32 @@
+# Frontend Dockerfile para Agora
+FROM node:18-alpine as builder
+
+WORKDIR /app
+
+# Copiar package files
+COPY package*.json ./
+COPY bun.lockb ./
+
+# Instalar dependencias
+RUN npm ci --only=production
+
+# Copiar código fuente
+COPY . .
+
+# Build de producción
+RUN npm run build
+
+# Stage de producción
+FROM nginx:alpine
+
+# Copiar build
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Configuración nginx
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+
+# Exponer puerto
+EXPOSE 8080
+
+# Comando de inicio
+CMD ["nginx", "-g", "daemon off;"] 

@@ -1,155 +1,168 @@
-
 /*
  * Copyright © 2025 Daniel Lopez - Sademarquez. Todos los derechos reservados.
  */
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { useLocalCredentials, type LocalCredential } from '@/hooks/useLocalCredentials';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { developerAuthService, DeveloperUser } from '@/services/developerAuthService';
+import { useToast } from '@/hooks/use-toast';
 
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: 'desarrollador' | 'master' | 'candidato' | 'lider' | 'votante' | 'visitante';
-  isDemoUser?: boolean;
-  territory?: string;
-  permissions?: string[];
-}
-
-interface SecureAuthContextType {
-  user: User | null;
-  session: any | null;
-  login: (username: string, password: string) => Promise<boolean>;
+interface AuthContextType {
+  user: DeveloperUser | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  authError: string | null;
-  clearAuthError: () => void;
-  systemHealth: 'healthy' | 'warning' | 'error';
-  databaseMode: 'production' | 'development';
-  hasPermission: (permission: string) => boolean;
+  initializeDeveloper: () => Promise<void>;
+  isDeveloper: boolean;
 }
 
-const SecureAuthContext = createContext<SecureAuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const SecureAuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<any | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [systemHealth] = useState<'healthy' | 'warning' | 'error'>('healthy');
-  const [databaseMode] = useState<'production' | 'development'>('development');
+export const useSecureAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useSecureAuth must be used within a SecureAuthProvider');
+  }
+  return context;
+};
 
-  const { validateCredential, hasPermission: checkPermission } = useLocalCredentials();
+interface SecureAuthProviderProps {
+  children: React.ReactNode;
+}
 
-  const clearAuthError = () => {
-    setAuthError(null);
+export const SecureAuthProvider: React.FC<SecureAuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<DeveloperUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Inicializar usuario desarrollador automáticamente
+  const initializeDeveloper = async () => {
+    try {
+      setLoading(true);
+      const developerUser = await developerAuthService.initializeDeveloperUser();
+      setUser(developerUser);
+      
+      toast({
+        title: "🚀 Desarrollador inicializado",
+        description: `Bienvenido, ${developerUser.name}!`,
+      });
+      
+      console.log('✅ Usuario desarrollador inicializado:', developerUser);
+    } catch (error) {
+      console.error('❌ Error inicializando desarrollador:', error);
+      toast({
+        title: "⚠️ Error de inicialización",
+        description: "No se pudo inicializar el usuario desarrollador",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Cargar sesión desde localStorage al inicializar
-  useEffect(() => {
-    console.log('🚀 INICIALIZANDO SECURE AUTH PROVIDER v8.0 - SIN BD');
-    
-    const savedUser = localStorage.getItem('electoral_user_secure');
-    if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-        setUser(userData);
-        setSession({ user: userData });
-        console.log('✅ Sesión segura local restaurada:', userData.name);
-      } catch (error) {
-        console.error('❌ Error cargando sesión segura:', error);
-        localStorage.removeItem('electoral_user_secure');
-      }
+  // Login manual
+  const login = async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      const user = await developerAuthService.loginDeveloper(email, password);
+      setUser(user);
+      
+      toast({
+        title: "✅ Login exitoso",
+        description: `Bienvenido, ${user.name}!`,
+      });
+    } catch (error) {
+      console.error('Error during login:', error);
+      toast({
+        title: "❌ Error de login",
+        description: "Credenciales incorrectas o error de conexión",
+        variant: "destructive"
+      });
+      throw error;
+    } finally {
+      setLoading(false);
     }
-    setIsLoading(false);
+  };
+
+  // Logout
+  const logout = async () => {
+    try {
+      await developerAuthService.logout();
+      setUser(null);
+      
+      toast({
+        title: "👋 Sesión cerrada",
+        description: "Has cerrado sesión exitosamente",
+      });
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
+
+  // Verificar sesión actual
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          // Verificar si es el usuario desarrollador
+          const currentUser = developerAuthService.getCurrentUser();
+          if (currentUser) {
+            setUser(currentUser);
+          } else {
+            // Si hay sesión pero no es el desarrollador, hacer logout
+            await supabase.auth.signOut();
+          }
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+
+    // Escuchar cambios en la autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          const currentUser = developerAuthService.getCurrentUser();
+          if (currentUser) {
+            setUser(currentUser);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (username: string, password: string): Promise<boolean> => {
-    console.log('🔐 INICIANDO LOGIN SEGURO LOCAL:', { username });
-    setAuthError(null);
-    setIsLoading(true);
-
-    try {
-      const credential = validateCredential(username.trim(), password.trim());
-      
-      if (credential) {
-        const userData: User = {
-          id: credential.id,
-          name: credential.name,
-          email: credential.email,
-          role: credential.role,
-          isDemoUser: credential.isDemoUser,
-          territory: credential.territory,
-          permissions: credential.permissions
-        };
-
-        setUser(userData);
-        setSession({ user: userData, accessToken: 'local_session_token' });
-        localStorage.setItem('electoral_user_secure', JSON.stringify(userData));
-        
-        console.log('✅ LOGIN SEGURO LOCAL EXITOSO:', {
-          name: userData.name,
-          role: userData.role,
-          territory: userData.territory
-        });
-        
-        setIsLoading(false);
-        return true;
-      } else {
-        setAuthError('❌ Credenciales incorrectas. Verifica usuario y contraseña.');
-        console.log('❌ LOGIN SEGURO LOCAL FALLÓ: Credenciales inválidas');
-        setIsLoading(false);
-        return false;
+  // Inicializar automáticamente si no hay usuario
+  useEffect(() => {
+    if (!loading && !user) {
+      // Solo inicializar automáticamente en la ruta del desarrollador
+      if (window.location.pathname === '/developer') {
+        initializeDeveloper();
       }
-    } catch (error) {
-      const errorMsg = 'Error inesperado durante el login seguro local';
-      setAuthError(errorMsg);
-      console.error('💥 ERROR LOGIN SEGURO LOCAL:', error);
-      setIsLoading(false);
-      return false;
     }
-  };
+  }, [loading, user]);
 
-  const logout = async () => {
-    console.log('🚪 Cerrando sesión segura local...');
-    setUser(null);
-    setSession(null);
-    setAuthError(null);
-    localStorage.removeItem('electoral_user_secure');
-    console.log('✅ Sesión segura local cerrada exitosamente');
-  };
-
-  const hasPermission = (permission: string): boolean => {
-    if (!user || !user.permissions) return false;
-    return checkPermission({ permissions: user.permissions } as LocalCredential, permission);
-  };
-
-  const value = {
+  const value: AuthContextType = {
     user,
-    session,
+    loading,
     login,
     logout,
-    isAuthenticated: !!user && !!session,
-    isLoading,
-    authError,
-    clearAuthError,
-    systemHealth,
-    databaseMode,
-    hasPermission,
+    initializeDeveloper,
+    isDeveloper: user?.role === 'developer'
   };
 
   return (
-    <SecureAuthContext.Provider value={value}>
+    <AuthContext.Provider value={value}>
       {children}
-    </SecureAuthContext.Provider>
+    </AuthContext.Provider>
   );
-};
-
-export const useSecureAuth = () => {
-  const context = useContext(SecureAuthContext);
-  if (context === undefined) {
-    throw new Error('useSecureAuth debe ser usado dentro de un SecureAuthProvider');
-  }
-  return context;
 };

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ModernPageLayout, ModernSection, ModernStat, SystemStatusIndicator } from '@/components/ModernPageLayout';
 import { DeveloperPanel } from '@/components/DeveloperPanel';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -19,9 +19,18 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle,
-  Clock
+  Clock,
+  MapPin,
+  BarChart3,
+  Users
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { Separator } from '@/components/ui/separator';
+import { MasterDatabaseManager } from '@/components/MasterDatabaseManager';
+import { MasterCampaignMap } from '@/components/MasterCampaignMap';
+import { AgoraAnalytics } from '@/components/AgoraAnalytics';
+import { N8NWorkflowManager } from '@/components/N8NWorkflowManager';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Custom Hook para métricas del sistema
 const useSystemMetrics = () => {
@@ -194,9 +203,39 @@ const ServicesStatus = () => {
   );
 };
 
-const DeveloperPage = () => {
-  const metrics = useSystemMetrics();
+const Developer: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('gemini');
+  const [systemStatus, setSystemStatus] = useState({
+    n8n: 'online',
+    redis: 'online',
+    postgresql: 'online',
+    gemini: 'online'
+  });
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Simular verificación de estado del sistema
+    const checkSystemStatus = () => {
+      setSystemStatus({
+        n8n: Math.random() > 0.1 ? 'online' : 'offline',
+        redis: Math.random() > 0.05 ? 'online' : 'offline',
+        postgresql: Math.random() > 0.05 ? 'online' : 'offline',
+        gemini: Math.random() > 0.1 ? 'online' : 'offline'
+      });
+    };
+
+    checkSystemStatus();
+    const interval = setInterval(checkSystemStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getStatusColor = (status: string) => {
+    return status === 'online' ? 'text-green-600' : 'text-red-600';
+  };
+
+  const getStatusIcon = (status: string) => {
+    return status === 'online' ? <CheckCircle className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />;
+  };
 
   const handleAction = (action: string) => {
     toast({
@@ -227,78 +266,206 @@ const DeveloperPage = () => {
   ];
 
   return (
-    <ModernPageLayout
-      title="Panel de Desarrollador"
-      subtitle="Gestión avanzada del sistema Agora"
-      icon={Code}
-      actions={actions}
-    >
-      {/* Métricas del Sistema */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <SystemMetricCard
-          title="Uso de CPU"
-          value={metrics.cpuUsage}
-          unit="%"
-          icon={Cpu}
-          progress={metrics.cpuUsage}
-          status={metrics.cpuUsage > 70 ? 'warning' : 'normal'}
-          trend="up"
-        />
-        <SystemMetricCard
-          title="Uso de Memoria"
-          value={metrics.memoryUsage}
-          unit="%"
-          icon={Activity}
-          progress={metrics.memoryUsage}
-          status={metrics.memoryUsage > 80 ? 'critical' : metrics.memoryUsage > 60 ? 'warning' : 'normal'}
-          trend="stable"
-        />
-        <SystemMetricCard
-          title="Latencia de Red"
-          value={metrics.networkLatency}
-          unit="ms"
-          icon={Network}
-          status={metrics.networkLatency > 200 ? 'warning' : 'normal'}
-          trend="down"
-        />
-        <SystemMetricCard
-          title="Conexiones Activas"
-          value={metrics.activeConnections}
-          unit=""
-          icon={Network}
-          status="normal"
-          trend="up"
-        />
-        <SystemMetricCard
-          title="Llamadas API"
-          value={metrics.apiCalls}
-          unit=""
-          icon={TrendingUp}
-          status="normal"
-          trend="up"
-        />
-        <SystemMetricCard
-          title="Tasa de Error"
-          value={metrics.errorRate}
-          unit="%"
-          icon={AlertTriangle}
-          status={metrics.errorRate > 2 ? 'critical' : metrics.errorRate > 1 ? 'warning' : 'normal'}
-          trend="down"
-        />
-      </div>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Panel de Desarrollador Agora</h1>
+            <p className="text-gray-600 mt-2">
+              Gestión avanzada de servicios, IA, métricas y configuración del sistema
+            </p>
+          </div>
+          
+          {/* Estado del Sistema */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Zap className={`h-4 w-4 ${getStatusColor(systemStatus.n8n)}`} />
+              <span className={`text-sm font-medium ${getStatusColor(systemStatus.n8n)}`}>
+                n8n
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Cpu className={`h-4 w-4 ${getStatusColor(systemStatus.redis)}`} />
+              <span className={`text-sm font-medium ${getStatusColor(systemStatus.redis)}`}>
+                Redis
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Database className={`h-4 w-4 ${getStatusColor(systemStatus.postgresql)}`} />
+              <span className={`text-sm font-medium ${getStatusColor(systemStatus.postgresql)}`}>
+                PostgreSQL
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Brain className={`h-4 w-4 ${getStatusColor(systemStatus.gemini)}`} />
+              <span className={`text-sm font-medium ${getStatusColor(systemStatus.gemini)}`}>
+                Gemini
+              </span>
+            </div>
+          </div>
+        </div>
 
-      {/* Panel de Desarrollador */}
-      <ModernSection title="Configuración de IA" icon={Brain}>
-        <DeveloperPanel />
-      </ModernSection>
+        {/* Tabs principales */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="gemini" className="flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              Google Gemini
+            </TabsTrigger>
+            <TabsTrigger value="masters" className="flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              Masters DB
+            </TabsTrigger>
+            <TabsTrigger value="map" className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Mapa Maestro
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Análisis
+            </TabsTrigger>
+            <TabsTrigger value="workflows" className="flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              n8n Workflows
+            </TabsTrigger>
+          </TabsList>
 
-      {/* Estado de Servicios y Logs */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ServicesStatus />
-        <SystemLogs />
+          {/* Contenido de Google Gemini */}
+          <TabsContent value="gemini" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="h-5 w-5" />
+                  Configuración de Google Gemini API
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DeveloperPanel />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Contenido de Masters Database */}
+          <TabsContent value="masters" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  Gestión de Bases de Datos Master
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MasterDatabaseManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Contenido del Mapa Maestro */}
+          <TabsContent value="map" className="space-y-6">
+            <MasterCampaignMap />
+          </TabsContent>
+
+          {/* Contenido de Análisis */}
+          <TabsContent value="analytics" className="space-y-6">
+            <AgoraAnalytics />
+          </TabsContent>
+
+          {/* Contenido de Workflows n8n */}
+          <TabsContent value="workflows" className="space-y-6">
+            <N8NWorkflowManager />
+          </TabsContent>
+        </Tabs>
+
+        {/* Información del Sistema */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Información del Sistema
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <h4 className="font-semibold mb-3">Servicios del Sistema</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">n8n Orquestador</span>
+                    <Badge className={systemStatus.n8n === 'online' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                      {systemStatus.n8n}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Redis Cache</span>
+                    <Badge className={systemStatus.redis === 'online' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                      {systemStatus.redis}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">PostgreSQL</span>
+                    <Badge className={systemStatus.postgresql === 'online' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                      {systemStatus.postgresql}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Google Gemini</span>
+                    <Badge className={systemStatus.gemini === 'online' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                      {systemStatus.gemini}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-3">Métricas Rápidas</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">CPU</span>
+                    <span className="text-sm font-medium">45%</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Memoria</span>
+                    <span className="text-sm font-medium">67%</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Latencia</span>
+                    <span className="text-sm font-medium">89ms</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Conexiones</span>
+                    <span className="text-sm font-medium">234</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-3">Últimas Actividades</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3 w-3 text-gray-400" />
+                    <span className="text-gray-600">Workflow ejecutado: Análisis Geoespacial</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-3 w-3 text-gray-400" />
+                    <span className="text-gray-600">Nuevo master registrado: Campaña Norte</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Brain className="h-3 w-3 text-gray-400" />
+                    <span className="text-gray-600">IA optimizada: Predicciones actualizadas</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Database className="h-3 w-3 text-gray-400" />
+                    <span className="text-gray-600">Sincronización completada: 1,247 registros</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </ModernPageLayout>
+    </div>
   );
 };
 
-export default DeveloperPage; 
+export default Developer; 
