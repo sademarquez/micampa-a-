@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Liderazgo from "./pages/Liderazgo";
 import Estructura from "./pages/Estructura";
 import DeveloperPage from "./pages/Developer";
+import SystemTesting from "./pages/SystemTesting";
 import { ModernNavigation } from "./components/ModernNavigation";
 
 function App() {
@@ -62,6 +63,17 @@ function App() {
                     <ModernNavigation />
                     <main className="flex-1 overflow-auto">
                       <DeveloperPage />
+                    </main>
+                  </div>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/system-testing" element={
+                <ProtectedRoute>
+                  <div className="flex h-screen">
+                    <ModernNavigation />
+                    <main className="flex-1 overflow-auto">
+                      <SystemTesting />
                     </main>
                   </div>
                 </ProtectedRoute>

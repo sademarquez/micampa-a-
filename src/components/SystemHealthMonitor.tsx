@@ -1,315 +1,344 @@
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { supabase } from '@/integrations/supabase/client';
 import { 
   CheckCircle, 
   XCircle, 
   AlertTriangle, 
-  Activity, 
-  Database,
+  RefreshCw, 
+  Server, 
+  Database, 
+  Globe, 
+  Zap,
+  Activity,
+  Wifi,
   Shield,
-  Network,
-  Server
+  Settings
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { defaultN8NConfig } from '@/config/n8nConfig';
 
-interface HealthCheck {
-  component: string;
-  status: 'healthy' | 'warning' | 'error';
-  message: string;
+interface HealthStatus {
+  service: string;
+  status: 'healthy' | 'warning' | 'error' | 'unknown';
+  responseTime?: number;
   lastCheck: Date;
-  details?: any;
+  details?: string;
+  endpoint?: string;
 }
 
-export const SystemHealthMonitor = () => {
-  const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([]);
-  const [isRunning, setIsRunning] = useState(false);
-  const [overallHealth, setOverallHealth] = useState<'healthy' | 'warning' | 'error'>('healthy');
+interface SystemHealth {
+  overall: 'healthy' | 'warning' | 'error';
+  services: HealthStatus[];
+  lastUpdate: Date;
+}
 
-  const runHealthChecks = async () => {
-    setIsRunning(true);
-    const checks: HealthCheck[] = [];
+const SystemHealthMonitor: React.FC = () => {
+  const [health, setHealth] = useState<SystemHealth>({
+    overall: 'unknown',
+    services: [],
+    lastUpdate: new Date()
+  });
+  const [isChecking, setIsChecking] = useState(false);
+  const { toast } = useToast();
 
-    // 1. Database Connectivity
+  const servicesToCheck = [
+    {
+      name: 'Frontend (PWA)',
+      endpoint: window.location.origin,
+      type: 'frontend'
+    },
+    {
+      name: 'Backend (n8n)',
+      endpoint: defaultN8NConfig.baseUrl,
+      type: 'api'
+    },
+    {
+      name: 'Supabase Database',
+      endpoint: 'https://zecltlsdkbndhqimpjjo.supabase.co',
+      type: 'database'
+    },
+    {
+      name: 'Google Gemini API',
+      endpoint: 'https://generativelanguage.googleapis.com',
+      type: 'ai'
+    },
+    {
+      name: 'Netlify CDN',
+      endpoint: 'https://netlify.com',
+      type: 'cdn'
+    }
+  ];
+
+  const checkServiceHealth = async (service: any): Promise<HealthStatus> => {
+    const startTime = Date.now();
+    
     try {
-      const start = Date.now();
-      const { data, error } = await supabase.from('profiles').select('count').limit(1);
-      const duration = Date.now() - start;
+      let response: Response;
       
-      checks.push({
-        component: 'Base de Datos',
-        status: error ? 'error' : duration > 2000 ? 'warning' : 'healthy',
-        message: error ? `Error: ${error.message}` : `Conectado (${duration}ms)`,
-        lastCheck: new Date(),
-        details: { duration, error }
-      });
-    } catch (error) {
-      checks.push({
-        component: 'Base de Datos',
-        status: 'error',
-        message: `Error crítico: ${error}`,
-        lastCheck: new Date()
-      });
-    }
-
-    // 2. Authentication System
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      checks.push({
-        component: 'Autenticación',
-        status: 'healthy',
-        message: user ? 'Usuario autenticado' : 'Sin autenticación',
-        lastCheck: new Date(),
-        details: { authenticated: !!user }
-      });
-    } catch (error) {
-      checks.push({
-        component: 'Autenticación',
-        status: 'error',
-        message: `Error en autenticación: ${error}`,
-        lastCheck: new Date()
-      });
-    }
-
-    // 3. Tables Accessibility - Using literal table names
-    const tableChecks = [
-      { name: 'profiles', label: 'Tabla profiles' },
-      { name: 'territories', label: 'Tabla territories' },
-      { name: 'voters', label: 'Tabla voters' },
-      { name: 'alerts', label: 'Tabla alerts' },
-      { name: 'messages', label: 'Tabla messages' }
-    ];
-
-    for (const table of tableChecks) {
-      try {
-        const { data, error } = await supabase.from(table.name as any).select('*').limit(1);
-        checks.push({
-          component: table.label,
-          status: error ? 'error' : 'healthy',
-          message: error ? `Error: ${error.message}` : 'Accesible',
-          lastCheck: new Date()
+      if (service.type === 'frontend') {
+        // Para el frontend, solo verificamos que esté cargado
+        response = await fetch(service.endpoint, { 
+          method: 'HEAD',
+          mode: 'no-cors'
         });
-      } catch (error) {
-        checks.push({
-          component: table.label,
-          status: 'error',
-          message: `Error crítico: ${error}`,
-          lastCheck: new Date()
+      } else if (service.type === 'api') {
+        // Para n8n, verificamos el endpoint de health
+        response = await fetch(`${service.endpoint}/health`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+      } else {
+        // Para otros servicios, hacemos una petición HEAD
+        response = await fetch(service.endpoint, { 
+          method: 'HEAD',
+          mode: 'no-cors'
         });
       }
-    }
 
-    // 4. System Configuration
-    try {
-      const { data, error } = await supabase
-        .from('system_config')
-        .select('*')
-        .limit(1);
+      const responseTime = Date.now() - startTime;
       
-      checks.push({
-        component: 'Configuración Sistema',
-        status: error ? 'warning' : 'healthy',
-        message: error ? 'No accesible' : 'Configuración OK',
-        lastCheck: new Date()
-      });
+      if (response.ok || response.status === 0) { // status 0 para no-cors
+        return {
+          service: service.name,
+          status: 'healthy',
+          responseTime,
+          lastCheck: new Date(),
+          details: `Respuesta exitosa (${responseTime}ms)`,
+          endpoint: service.endpoint
+        };
+      } else {
+        return {
+          service: service.name,
+          status: 'warning',
+          responseTime,
+          lastCheck: new Date(),
+          details: `HTTP ${response.status}`,
+          endpoint: service.endpoint
+        };
+      }
     } catch (error) {
-      checks.push({
-        component: 'Configuración Sistema',
-        status: 'warning',
-        message: 'Tabla no disponible',
-        lastCheck: new Date()
-      });
-    }
-
-    // 5. N8N Integration Check
-    try {
-      const { data, error } = await supabase
-        .from('n8n_workflows')
-        .select('*')
-        .eq('active', true);
-      
-      checks.push({
-        component: 'N8N Workflows',
-        status: error ? 'warning' : 'healthy',
-        message: error ? 'Error accediendo workflows' : `${data?.length || 0} workflows activos`,
+      const responseTime = Date.now() - startTime;
+      return {
+        service: service.name,
+        status: 'error',
+        responseTime,
         lastCheck: new Date(),
-        details: { activeWorkflows: data?.length || 0 }
-      });
-    } catch (error) {
-      checks.push({
-        component: 'N8N Workflows',
-        status: 'warning',
-        message: 'Integración no disponible',
-        lastCheck: new Date()
-      });
+        details: error instanceof Error ? error.message : 'Error desconocido',
+        endpoint: service.endpoint
+      };
     }
+  };
 
-    setHealthChecks(checks);
+  const performHealthCheck = async () => {
+    setIsChecking(true);
     
-    // Calculate overall health
-    const hasError = checks.some(check => check.status === 'error');
-    const hasWarning = checks.some(check => check.status === 'warning');
-    
-    if (hasError) {
-      setOverallHealth('error');
-    } else if (hasWarning) {
-      setOverallHealth('warning');
-    } else {
-      setOverallHealth('healthy');
+    try {
+      const healthPromises = servicesToCheck.map(checkServiceHealth);
+      const results = await Promise.all(healthPromises);
+      
+      const errorCount = results.filter(r => r.status === 'error').length;
+      const warningCount = results.filter(r => r.status === 'warning').length;
+      
+      let overall: 'healthy' | 'warning' | 'error' = 'healthy';
+      if (errorCount > 0) {
+        overall = 'error';
+      } else if (warningCount > 0) {
+        overall = 'warning';
+      }
+      
+      const newHealth: SystemHealth = {
+        overall,
+        services: results,
+        lastUpdate: new Date()
+      };
+      
+      setHealth(newHealth);
+      
+      toast({
+        title: "Health Check Completado",
+        description: `Estado general: ${overall.toUpperCase()}`,
+        variant: overall === 'healthy' ? 'default' : 'destructive'
+      });
+      
+    } catch (error) {
+      toast({
+        title: "Error en Health Check",
+        description: "No se pudo completar la verificación",
+        variant: "destructive"
+      });
+    } finally {
+      setIsChecking(false);
     }
-    
-    setIsRunning(false);
   };
 
   useEffect(() => {
-    runHealthChecks();
-    
-    // Auto-refresh every 5 minutes
-    const interval = setInterval(runHealthChecks, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    performHealthCheck();
   }, []);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'healthy': return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'error': return <XCircle className="w-4 h-4 text-red-500" />;
-      case 'warning': return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
-      default: return <Activity className="w-4 h-4 text-gray-500" />;
+      case 'healthy':
+        return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case 'warning':
+        return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
+      case 'error':
+        return <XCircle className="w-5 h-5 text-red-500" />;
+      default:
+        return <Activity className="w-5 h-5 text-gray-500" />;
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'healthy': return 'bg-green-100 text-green-800';
-      case 'error': return 'bg-red-100 text-red-800';
-      case 'warning': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getOverallStatusConfig = () => {
-    switch (overallHealth) {
       case 'healthy':
-        return {
-          icon: CheckCircle,
-          color: 'text-green-600',
-          bgColor: 'bg-green-50 border-green-200',
-          message: 'Sistema operando normalmente'
-        };
+        return <Badge className="bg-green-100 text-green-800">Sano</Badge>;
       case 'warning':
-        return {
-          icon: AlertTriangle,
-          color: 'text-yellow-600',
-          bgColor: 'bg-yellow-50 border-yellow-200',
-          message: 'Sistema con advertencias menores'
-        };
+        return <Badge className="bg-yellow-100 text-yellow-800">Advertencia</Badge>;
       case 'error':
-        return {
-          icon: XCircle,
-          color: 'text-red-600',
-          bgColor: 'bg-red-50 border-red-200',
-          message: 'Sistema con errores críticos'
-        };
+        return <Badge className="bg-red-100 text-red-800">Error</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800">Desconocido</Badge>;
     }
   };
 
-  const overallConfig = getOverallStatusConfig();
-  const OverallIcon = overallConfig.icon;
+  const getOverallStatusColor = () => {
+    switch (health.overall) {
+      case 'healthy':
+        return 'text-green-600';
+      case 'warning':
+        return 'text-yellow-600';
+      case 'error':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
+    }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Overall Status */}
-      <Alert className={`${overallConfig.bgColor} border-2`}>
-        <OverallIcon className={`h-5 w-5 ${overallConfig.color}`} />
-        <AlertDescription>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`font-semibold ${overallConfig.color}`}>
-                Estado General del Sistema
-              </p>
-              <p className={overallConfig.color}>{overallConfig.message}</p>
-            </div>
-            <Button 
-              onClick={runHealthChecks} 
-              disabled={isRunning}
-              size="sm"
-            >
-              {isRunning ? 'Verificando...' : 'Verificar Ahora'}
-            </Button>
-          </div>
-        </AlertDescription>
-      </Alert>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Monitoreo de Salud del Sistema</h2>
+          <p className="text-gray-600">Estado de todos los servicios y componentes</p>
+        </div>
+        <Button
+          onClick={performHealthCheck}
+          disabled={isChecking}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className={`w-4 h-4 ${isChecking ? 'animate-spin' : ''}`} />
+          {isChecking ? 'Verificando...' : 'Actualizar'}
+        </Button>
+      </div>
 
-      {/* Individual Health Checks */}
-      <Card className="bg-gray-ecosystem-card shadow-ecosystem-soft border-gray-ecosystem-border">
+      {/* Estado General */}
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-ecosystem-primary">
-            <Activity className="w-5 h-5" />
-            Diagnóstico Detallado del Sistema
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-6 h-6" />
+            Estado General del Sistema
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {healthChecks.map((check, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-ecosystem-border shadow-ecosystem-soft">
-              <div className="flex items-center gap-3">
-                {getStatusIcon(check.status)}
-                <div>
-                  <p className="font-medium text-gray-ecosystem-dark">{check.component}</p>
-                  <p className="text-sm text-gray-ecosystem-text">{check.message}</p>
-                  <p className="text-xs text-gray-ecosystem-medium">
-                    Última verificación: {check.lastCheck.toLocaleTimeString()}
-                  </p>
-                </div>
-              </div>
-              <Badge className={getStatusBadge(check.status)}>
-                {check.status.toUpperCase()}
-              </Badge>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {getStatusIcon(health.overall)}
+              <span className={`text-lg font-semibold ${getOverallStatusColor()}`}>
+                {health.overall.toUpperCase()}
+              </span>
             </div>
-          ))}
+            <div className="text-sm text-gray-500">
+              Última actualización: {health.lastUpdate.toLocaleTimeString()}
+            </div>
+          </div>
+          
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center p-3 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">
+                {health.services.filter(s => s.status === 'healthy').length}
+              </div>
+              <div className="text-sm text-green-700">Servicios Sanos</div>
+            </div>
+            <div className="text-center p-3 bg-yellow-50 rounded-lg">
+              <div className="text-2xl font-bold text-yellow-600">
+                {health.services.filter(s => s.status === 'warning').length}
+              </div>
+              <div className="text-sm text-yellow-700">Advertencias</div>
+            </div>
+            <div className="text-center p-3 bg-red-50 rounded-lg">
+              <div className="text-2xl font-bold text-red-600">
+                {health.services.filter(s => s.status === 'error').length}
+              </div>
+              <div className="text-sm text-red-700">Errores</div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Summary Statistics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-green-50 border-green-200 shadow-ecosystem-soft">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {healthChecks.filter(c => c.status === 'healthy').length}
-            </div>
-            <div className="text-sm text-green-600">Saludables</div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-yellow-50 border-yellow-200 shadow-ecosystem-soft">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-600">
-              {healthChecks.filter(c => c.status === 'warning').length}
-            </div>
-            <div className="text-sm text-yellow-600">Advertencias</div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-red-50 border-red-200 shadow-ecosystem-soft">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">
-              {healthChecks.filter(c => c.status === 'error').length}
-            </div>
-            <div className="text-sm text-red-600">Errores</div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-blue-50 border-blue-200 shadow-ecosystem-soft">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">
-              {healthChecks.length}
-            </div>
-            <div className="text-sm text-blue-600">Total</div>
-          </CardContent>
-        </Card>
+      {/* Servicios Individuales */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {health.services.map((service, index) => (
+          <Card key={index} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(service.status)}
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{service.service}</h3>
+                    <p className="text-sm text-gray-500">{service.endpoint}</p>
+                  </div>
+                </div>
+                {getStatusBadge(service.status)}
+              </div>
+              
+              <div className="space-y-2 text-sm">
+                {service.responseTime && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Tiempo de respuesta:</span>
+                    <span className="font-mono">{service.responseTime}ms</span>
+                  </div>
+                )}
+                {service.details && (
+                  <div className="text-gray-600">
+                    <span className="font-medium">Detalles:</span> {service.details}
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Última verificación:</span>
+                  <span className="text-gray-800">{service.lastCheck.toLocaleTimeString()}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
+
+      {/* Alertas */}
+      {health.services.some(s => s.status === 'error') && (
+        <Alert variant="destructive">
+          <XCircle className="h-4 w-4" />
+          <AlertDescription>
+            Hay servicios con errores. Revisa la configuración y las conexiones de red.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {health.services.some(s => s.status === 'warning') && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Algunos servicios muestran advertencias. Considera revisar la configuración.
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 };
+
+export default SystemHealthMonitor;
