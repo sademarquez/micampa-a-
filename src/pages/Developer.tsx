@@ -29,7 +29,7 @@ import { Separator } from '@/components/ui/separator';
 import { MasterDatabaseManager } from '@/components/MasterDatabaseManager';
 import { MasterCampaignMap } from '@/components/MasterCampaignMap';
 import { AgoraAnalytics } from '@/components/AgoraAnalytics';
-import { N8NWorkflowManager } from '@/components/N8NWorkflowManager';
+import N8NWorkflowManager from '@/components/N8NWorkflowManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Custom Hook para métricas del sistema

@@ -28,7 +28,7 @@ function App() {
                   <div className="flex h-screen">
                     <ModernNavigation />
                     <main className="flex-1 overflow-auto">
-                      <Dashboard />
+                  <Dashboard />
                     </main>
                   </div>
                 </ProtectedRoute>
@@ -39,7 +39,7 @@ function App() {
                   <div className="flex h-screen">
                     <ModernNavigation />
                     <main className="flex-1 overflow-auto">
-                      <Liderazgo />
+                  <Liderazgo />
                     </main>
                   </div>
                 </ProtectedRoute>

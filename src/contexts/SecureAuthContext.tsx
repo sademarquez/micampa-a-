@@ -48,7 +48,7 @@ export const SecureAuthProvider: React.FC<SecureAuthProviderProps> = ({ children
       });
       
       console.log('✅ Usuario desarrollador inicializado:', developerUser);
-    } catch (error) {
+      } catch (error) {
       console.error('❌ Error inicializando desarrollador:', error);
       toast({
         title: "⚠️ Error de inicialización",
@@ -88,7 +88,7 @@ export const SecureAuthProvider: React.FC<SecureAuthProviderProps> = ({ children
   const logout = async () => {
     try {
       await developerAuthService.logout();
-      setUser(null);
+    setUser(null);
       
       toast({
         title: "👋 Sesión cerrada",

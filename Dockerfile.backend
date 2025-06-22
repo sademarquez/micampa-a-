@@ -11,12 +11,10 @@ ENV N8N_PROTOCOL=https
 ENV N8N_USER_MANAGEMENT_DISABLED=false
 ENV N8N_DIAGNOSTICS_ENABLED=false
 
-# Instalar dependencias adicionales
-RUN apt-get update && apt-get install -y \
-    postgresql-client \
-    redis-tools \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Instalar dependencias adicionales como root
+USER root
+RUN apk update && apk add --no-cache postgresql-client redis curl
+USER node
 
 # Copiar configuración personalizada
 COPY docker-compose.yml /tmp/
