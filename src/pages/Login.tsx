@@ -119,37 +119,38 @@ const Login = () => {
 
   if (isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-negro-50 via-verde-sistema-50 to-negro-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black to-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-verde-sistema-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-verde-sistema-600">¡Autenticado!</h2>
-          <p className="text-negro-600">Redirigiendo al dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-white">¡Autenticado!</h2>
+          <p className="text-gray-300">Redirigiendo al dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-negro-50 via-verde-sistema-50 to-negro-100 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-black to-gray-900 text-white relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-full bg-black/50 z-0"></div>
       <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl w-full items-center">
           
           {/* Panel de Login */}
-          <Card className="w-full border-2 border-verde-sistema-200 shadow-2xl bg-white/95 backdrop-blur-lg">
+          <Card className="w-full border-gray-700/50 shadow-2xl bg-gray-900/60 backdrop-blur-sm">
             <CardHeader className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-verde-sistema-600 to-negro-800 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <Shield className="text-white w-8 h-8" />
               </div>
-              <CardTitle className="text-2xl font-bold text-negro-900">
+              <CardTitle className="text-2xl font-bold text-white">
                 {systemInfo.name}
               </CardTitle>
-              <p className="text-negro-600">{systemInfo.description}</p>
-              <p className="text-xs text-verde-sistema-600 font-medium">{systemInfo.version}</p>
+              <p className="text-gray-300">{systemInfo.description}</p>
+              <p className="text-xs text-blue-400 font-medium">{systemInfo.version}</p>
             </CardHeader>
             
             <CardContent>
               {authError && (
-                <Alert variant="destructive" className="mb-4">
+                <Alert variant="destructive" className="mb-4 bg-red-900/50 border-red-700 text-red-200">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{authError}</AlertDescription>
                 </Alert>
@@ -157,18 +158,18 @@ const Login = () => {
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="username" className="text-negro-700 font-medium">
+                  <Label htmlFor="username" className="text-gray-400 font-medium">
                     Usuario o Email
                   </Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-negro-400" />
+                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                     <Input
                       id="username"
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="desarrollador o dev@sademarquez.com"
-                      className="pl-10 border-2 border-negro-300 focus:border-verde-sistema-500"
+                      placeholder="samantha.smith@example.com"
+                      className="pl-10 bg-gray-800 border-2 border-gray-700 focus:border-blue-500 text-white"
                       required
                       disabled={isLoading}
                     />
@@ -176,18 +177,18 @@ const Login = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-negro-700 font-medium">
+                  <Label htmlFor="password" className="text-gray-400 font-medium">
                     Contraseña
                   </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-negro-400" />
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Contraseña segura"
-                      className="pl-10 pr-10 border-2 border-negro-300 focus:border-verde-sistema-500"
+                      className="pl-10 pr-10 bg-gray-800 border-2 border-gray-700 focus:border-blue-500 text-white"
                       required
                       disabled={isLoading}
                     />
@@ -195,7 +196,7 @@ const Login = () => {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-negro-400 hover:text-negro-600"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
                       onClick={() => setShowPassword(!showPassword)}
                       disabled={isLoading}
                     >
@@ -207,7 +208,7 @@ const Login = () => {
                 <div className="grid grid-cols-1 gap-3">
                   <Button 
                     type="submit" 
-                    className="w-full bg-gradient-to-r from-verde-sistema-600 to-negro-800 hover:from-verde-sistema-700 hover:to-negro-900 text-white font-bold py-3" 
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 transition-colors" 
                     disabled={isLoading}
                   >
                     {isLoading ? "Autenticando..." : "Iniciar Sesión"}
@@ -217,7 +218,7 @@ const Login = () => {
                     type="button"
                     variant="outline"
                     onClick={() => setShowCredentials(!showCredentials)}
-                    className="w-full border-2 border-verde-sistema-500 text-verde-sistema-700 hover:bg-verde-sistema-50"
+                    className="w-full border-2 border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white"
                     disabled={isLoading}
                   >
                     {showCredentials ? "Ocultar" : "Ver"} Credenciales Disponibles
@@ -225,10 +226,10 @@ const Login = () => {
                 </div>
               </form>
               
-              <div className="mt-4 p-3 bg-verde-sistema-50 rounded-lg text-xs text-verde-sistema-700 border border-verde-sistema-200">
+              <div className="mt-4 p-3 bg-gray-800/50 rounded-lg text-xs text-gray-400 border border-gray-700">
                 <div className="flex items-center gap-2 mb-2">
-                  <Database className="w-4 h-4 text-verde-sistema-600" />
-                  <strong className="text-verde-sistema-900">✅ Sistema Local Sin BD</strong>
+                  <Database className="w-4 h-4 text-blue-400" />
+                  <strong className="text-gray-200">✅ Sistema Local Sin BD</strong>
                 </div>
                 <p>• ✅ Credenciales JSON locales</p>
                 <p>• ✅ Sin dependencia de Supabase</p>
@@ -241,88 +242,34 @@ const Login = () => {
 
           {/* Panel de Credenciales */}
           {showCredentials && (
-            <Card className="w-full border-2 border-verde-sistema-200 shadow-2xl bg-white/95 backdrop-blur-lg">
+            <Card className="w-full border-gray-700/50 shadow-2xl bg-gray-900/60 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-verde-sistema-800 text-xl flex items-center gap-2">
-                  <CheckCircle className="w-6 h-6" />
+                <CardTitle className="text-white text-xl flex items-center gap-2">
+                  <CheckCircle className="w-6 h-6 text-blue-400" />
                   🔑 Credenciales Locales
                 </CardTitle>
-                <p className="text-verde-sistema-600">Sistema sin base de datos</p>
+                <p className="text-gray-400">Sistema sin base de datos</p>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {activeCredentials.map((cred, index) => (
-                    <div key={index} className="p-4 border-2 border-verde-sistema-100 rounded-lg hover:bg-verde-sistema-50 transition-colors">
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <div className="font-bold text-lg text-negro-900">{cred.name}</div>
-                          <div className="text-sm text-negro-600">{cred.description}</div>
-                          <div className="text-xs text-verde-sistema-600 font-medium">
-                            📧 {cred.email}
-                          </div>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => useCredential(cred)}
-                          className="text-verde-sistema-700 border-verde-sistema-500 hover:bg-verde-sistema-100"
-                          disabled={isLoading}
-                        >
-                          Usar
-                        </Button>
+                {activeCredentials.map((cred) => (
+                  <div key={cred.id} className="mb-3 p-3 rounded-lg bg-gray-800/70">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-bold text-white">{cred.name}</p>
+                        <p className="text-sm text-gray-300">{cred.username}</p>
+                        <p className="text-xs text-blue-400 capitalize">{cred.role}</p>
                       </div>
-                      <div className="bg-negro-100 p-2 rounded text-xs font-mono border">
-                        <div><strong>Usuario:</strong> {cred.username}</div>
-                        <div><strong>Email:</strong> {cred.email}</div>
-                        <div><strong>Contraseña:</strong> {cred.password}</div>
-                        <div><strong>Territorio:</strong> {cred.territory}</div>
-                        <div><strong>Permisos:</strong> {cred.permissions.join(', ')}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="mt-6 p-4 bg-gradient-to-r from-verde-sistema-50 to-negro-50 rounded-lg border-2 border-verde-sistema-200">
-                  <h3 className="font-bold text-sm text-verde-sistema-800 mb-3">🚀 SISTEMA LOCAL SIN BD</h3>
-                  <div className="text-xs text-negro-700 space-y-2">
-                    <div>1. <strong>Credenciales:</strong> Almacenadas en credentials.json</div>
-                    <div>2. <strong>Sin BD:</strong> No requiere Supabase ni conexión externa</div>
-                    <div>3. <strong>Local:</strong> Autenticación completamente local</div>
-                    <div>4. <strong>Configurable:</strong> BD se puede configurar desde panel</div>
-                    <div className="mt-3 p-2 bg-verde-sistema-100 rounded border border-verde-sistema-300">
-                      <strong className="text-verde-sistema-800">🎯 ESQUELETO FUNCIONAL:</strong> 
-                      <br />{systemInfo.copyright}
+                      <Button onClick={() => useCredential(cred)} size="sm" className="bg-blue-600 hover:bg-blue-700">
+                        Usar
+                      </Button>
                     </div>
                   </div>
-                </div>
+                ))}
               </CardContent>
             </Card>
           )}
         </div>
       </div>
-      <button
-        onClick={async () => {
-          const res = await loginWithGoogle();
-          if (res.success) {
-            window.location.href = '/dashboard';
-          } else {
-            alert('Error con Google: ' + res.error);
-          }
-        }}
-        disabled={googleLoading}
-        style={{
-          background: '#4285F4',
-          color: 'white',
-          border: 'none',
-          borderRadius: 4,
-          padding: '10px 20px',
-          marginTop: 16,
-          fontWeight: 'bold',
-          cursor: 'pointer',
-        }}
-      >
-        Ingresar con Google
-      </button>
     </div>
   );
 };
