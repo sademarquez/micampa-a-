@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
@@ -14,6 +13,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -56,6 +56,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         if (profile) {
+          // Si el usuario es daniel@dev.com y no tiene rol developer, actualizarlo
+          if (supabaseUser.email === 'daniel@dev.com' && profile.role !== 'developer') {
+            await supabase
+              .from('profiles')
+              .update({ role: 'developer', name: 'Daniel Developer' })
+              .eq('id', supabaseUser.id);
+            profile.role = 'developer';
+            profile.name = 'Daniel Developer';
+          }
           const userData: User = {
             id: profile.id,
             name: profile.name || supabaseUser.email || 'Usuario',
@@ -197,6 +206,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const loginWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/dashboard',
+        },
+      });
+      if (error) {
+        setIsLoading(false);
+        return { success: false, error: error.message };
+      }
+      // El flujo OAuth redirige automáticamente
+      return { success: true };
+    } catch (error: any) {
+      setIsLoading(false);
+      return { success: false, error: error.message || 'Error desconocido' };
+    }
+  };
+
   const logout = async () => {
     console.log('🚪 Cerrando sesión...');
     try {
@@ -219,6 +249,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user,
     session,
     login,
+    loginWithGoogle,
     logout,
     isAuthenticated: !!user && !!session,
     isLoading,

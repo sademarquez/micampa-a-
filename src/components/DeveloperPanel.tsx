@@ -282,6 +282,7 @@ export function DeveloperPanel() {
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                     onClick={() => setShowMasterKey(!showMasterKey)}
+                    aria-label={showMasterKey ? "Ocultar clave de API" : "Mostrar clave de API"}
                   >
                     {showMasterKey ? (
                       <EyeOff className="w-4 h-4" />
@@ -354,6 +355,7 @@ export function DeveloperPanel() {
                 size="sm"
                 className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                 onClick={() => setShowGeminiKey(!showGeminiKey)}
+                aria-label={showGeminiKey ? "Ocultar clave de API" : "Mostrar clave de API"}
               >
                 {showGeminiKey ? (
                   <EyeOff className="w-4 h-4" />
@@ -436,6 +438,7 @@ export function DeveloperPanel() {
                 size="sm"
                 className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                 onClick={() => setShowGeminiProKey(!showGeminiProKey)}
+                aria-label={showGeminiProKey ? "Ocultar clave de API" : "Mostrar clave de API"}
               >
                 {showGeminiProKey ? (
                   <EyeOff className="w-4 h-4" />

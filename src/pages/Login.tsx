@@ -1,9 +1,8 @@
-
 /*
  * Copyright © 2025 Daniel Lopez - Sademarquez. Todos los derechos reservados.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +14,7 @@ import { useLocalCredentials } from "@/hooks/useLocalCredentials";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAppConfig } from "@/config/appConfig";
+import { AuthContext } from '@/contexts/AuthContext';
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -28,6 +28,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { loginWithGoogle, isLoading: googleLoading } = useContext(AuthContext);
 
   const activeCredentials = getAllActiveCredentials();
 
@@ -299,6 +300,29 @@ const Login = () => {
           )}
         </div>
       </div>
+      <button
+        onClick={async () => {
+          const res = await loginWithGoogle();
+          if (res.success) {
+            window.location.href = '/dashboard';
+          } else {
+            alert('Error con Google: ' + res.error);
+          }
+        }}
+        disabled={googleLoading}
+        style={{
+          background: '#4285F4',
+          color: 'white',
+          border: 'none',
+          borderRadius: 4,
+          padding: '10px 20px',
+          marginTop: 16,
+          fontWeight: 'bold',
+          cursor: 'pointer',
+        }}
+      >
+        Ingresar con Google
+      </button>
     </div>
   );
 };
