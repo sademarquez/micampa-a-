@@ -25,13 +25,14 @@ export interface N8NResponse {
   executionId?: string;
 }
 
-// Configuración de N8N para producción
+// Configuración de N8N usando variables de entorno
 export const defaultN8NConfig: N8NConfig = {
-  baseUrl: import.meta.env.DEV ? 'http://localhost:5678' : 'https://n8n.sistema-electoral.com',
+  baseUrl: import.meta.env.VITE_N8N_API_URL || 
+           (import.meta.env.DEV ? 'http://localhost:5678' : 'https://agora-backend-894766450086.us-central1.run.app'),
   webhookPrefix: '/webhook',
   timeout: 30000,
   retryAttempts: 3,
-  productionMode: !import.meta.env.DEV
+  productionMode: import.meta.env.VITE_PRODUCTION_MODE === 'true' || !import.meta.env.DEV
 };
 
 // Mapeo de componentes a webhooks N8N

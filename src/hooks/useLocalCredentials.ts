@@ -1,5 +1,4 @@
-
-import credentialsData from '@/config/credentials.json';
+import credentialsData from '@/config/localCredentials.json';
 
 export interface LocalCredential {
   id: string;
@@ -19,15 +18,30 @@ export interface LocalCredential {
 export interface SystemInfo {
   name: string;
   version: string;
-  author: string;
-  copyright: string;
   description: string;
+  copyright: string;
+  environment: string;
+  database: string;
+}
+
+export interface DeveloperAccess {
+  enabled: boolean;
+  features: string[];
+  apiKeys: Record<string, string>;
 }
 
 export const useLocalCredentials = () => {
-  const credentials: LocalCredential[] = credentialsData.credentials;
-  const systemInfo: SystemInfo = credentialsData.systemInfo;
-  const masterPassword: string = credentialsData.developerAccess.masterPassword;
+  const credentials: LocalCredential[] = credentialsData.credentials as LocalCredential[];
+  const systemInfo: SystemInfo = credentialsData.system as SystemInfo;
+  const developerAccess: DeveloperAccess = {
+    enabled: true,
+    features: ['gemini', 'n8n', 'analytics', 'mobile_audit'],
+    apiKeys: {
+      gemini: 'demo_key_123456',
+      n8n: 'demo_webhook_123456'
+    }
+  };
+  const masterPassword: string = 'admin123'; // Contraseña maestra fija para desarrollo
 
   const validateMasterPassword = (password: string): boolean => {
     return password === masterPassword;
@@ -74,6 +88,7 @@ export const useLocalCredentials = () => {
   return {
     credentials,
     systemInfo,
+    developerAccess,
     masterPassword,
     validateMasterPassword,
     validateCredential,
