@@ -213,16 +213,6 @@ const Login = () => {
                   >
                     {isLoading ? "Autenticando..." : "Iniciar Sesión"}
                   </Button>
-                  
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowCredentials(!showCredentials)}
-                    className="w-full border-2 border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white"
-                    disabled={isLoading}
-                  >
-                    {showCredentials ? "Ocultar" : "Ver"} Credenciales Disponibles
-                  </Button>
                 </div>
               </form>
               
@@ -240,34 +230,23 @@ const Login = () => {
             </CardContent>
           </Card>
 
-          {/* Panel de Credenciales */}
-          {showCredentials && (
-            <Card className="w-full border-gray-700/50 shadow-2xl bg-gray-900/60 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-white text-xl flex items-center gap-2">
-                  <CheckCircle className="w-6 h-6 text-blue-400" />
-                  🔑 Credenciales Locales
-                </CardTitle>
-                <p className="text-gray-400">Sistema sin base de datos</p>
-              </CardHeader>
-              <CardContent>
-                {activeCredentials.map((cred) => (
-                  <div key={cred.id} className="mb-3 p-3 rounded-lg bg-gray-800/70">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="font-bold text-white">{cred.name}</p>
-                        <p className="text-sm text-gray-300">{cred.username}</p>
-                        <p className="text-xs text-blue-400 capitalize">{cred.role}</p>
-                      </div>
-                      <Button onClick={() => useCredential(cred)} size="sm" className="bg-blue-600 hover:bg-blue-700">
-                        Usar
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
+          {/* Panel de Información del Sistema */}
+          <div className="text-center lg:text-left">
+            <h1 className="text-4xl font-bold text-white tracking-tight">Sistema de Gestión Ágora</h1>
+            <p className="mt-4 text-lg text-gray-300">
+              Bienvenido a la plataforma de gestión electoral. Por favor, inicia sesión con tus credenciales seguras.
+            </p>
+            <div className="mt-6 flex items-center justify-center lg:justify-start gap-x-6">
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+                <Shield className="w-5 h-5 text-blue-400" />
+                <span>Entorno Seguro</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+                <Database className="w-5 h-5 text-blue-400" />
+                <span>Conexión Verificada</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

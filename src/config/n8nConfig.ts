@@ -220,3 +220,9 @@ export const useN8N = () => {
     createAlert: n8nClient.createAlert.bind(n8nClient)
   };
 };
+
+export const n8nConfig = {
+  baseURL: process.env.NODE_ENV === 'production' 
+    ? 'URL_DE_PRODUCCION_AQUI' 
+    : 'http://localhost:5678',
+};

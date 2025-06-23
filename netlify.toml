@@ -4,6 +4,9 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  VITE_PRODUCTION_MODE = "true"
+  VITE_N8N_API_URL = "https://tu-dominio-hostinger.com:5678"
+  VITE_N8N_API_KEY = "tu-api-key-de-n8n"
 
 [[redirects]]
   from = "/*"

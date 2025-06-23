@@ -11,7 +11,6 @@ import Estructura from "./pages/Estructura";
 import DeveloperPage from "./pages/Developer";
 import SystemTesting from "./pages/SystemTesting";
 import { ModernNavigation } from "./components/ModernNavigation";
-import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import PageLayout from './components/PageLayout';
 import SecureLogin from './pages/SecureLogin';
@@ -20,7 +19,7 @@ import RegistroPersonalizado from './pages/RegistroPersonalizado';
 function App() {
   return (
     <Router>
-      <AuthProvider>
+      <SecureAuthProvider>
         <ThemeProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -77,7 +76,7 @@ function App() {
           </Routes>
           <Toaster />
         </ThemeProvider>
-      </AuthProvider>
+      </SecureAuthProvider>
     </Router>
   );
 }
